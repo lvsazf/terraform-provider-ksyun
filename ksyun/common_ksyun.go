@@ -5,6 +5,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-ksyun/logger"
 	"log"
+	"reflect"
 	"strings"
 )
 
@@ -93,6 +94,76 @@ func SetDByRespV1(d *schema.ResourceData, m interface{}, exclud map[string]bool)
 		}
 	}
 	return mre
+}
+
+func SetResourceDataByResp(d *schema.ResourceData, item interface{}, keys map[string]SdkResponseData, start ...bool) interface{} {
+	setFlag := false
+	if start == nil || (len(start) > 0 && start[0]) {
+		setFlag = true
+	}
+	if reflect.ValueOf(item).Kind() == reflect.Map {
+		result := make(map[string]interface{})
+		root := item.(map[string]interface{})
+		for k, v := range root {
+			var value interface{}
+			var err error
+			if keys[k].Next != nil {
+				value = SetResourceDataByResp(d, v, keys[k].Next, false)
+			} else if _, ok := keys[k]; ok {
+				value = v
+			} else {
+				continue
+			}
+			if setFlag {
+				err = d.Set(Hump2Downline(k), value)
+				if err != nil {
+					log.Println(err.Error())
+					panic("ERROR: " + err.Error())
+				}
+			} else {
+				result[Hump2Downline(k)] = value
+			}
+		}
+		if len(result) > 0 {
+			return result
+		}
+	} else if reflect.ValueOf(item).Kind() == reflect.Slice {
+		var result []interface{}
+		result = []interface{}{}
+		root := item.([]interface{})
+		for _, v := range root {
+			value := SetResourceDataByResp(d, v, keys, false)
+			result = append(result, value)
+		}
+		if len(result) > 0 {
+			return result
+		}
+	}
+	return nil
+}
+
+func GetProjectInfo(input *map[string]interface{}, client *KsyunClient) error {
+	iamConn := client.iamconn
+	req := make(map[string]interface{})
+	resp, err := iamConn.GetAccountAllProjectList(&req)
+	if err != nil {
+		return fmt.Errorf("Error GetAccountAllProjectList : %s ", err)
+	}
+	if resp != nil {
+		l, err1 := getSdkValue("ListProjectResult.ProjectList", *resp)
+		if err1 != nil {
+			return fmt.Errorf("Error GetAccountAllProjectList : %s ", err)
+		}
+		if l != nil {
+			if l1, ok := l.([]interface{}); ok {
+				for i, pj := range l1 {
+					index := fmt.Sprintf("ProjectId.%d", i+1)
+					(*input)[index] = pj.(map[string]interface{})["ProjectId"]
+				}
+			}
+		}
+	}
+	return nil
 }
 
 //set sdk response (map[string]interface{}) to the terraform ([]map[string]interface).

@@ -67,6 +67,8 @@ func Provider() terraform.ResourceProvider {
 			"ksyun_lb_rules":                    dataSourceKsyunSlbRules(),
 			"ksyun_lb_backend_server_groups":    dataSourceKsyunBackendServerGroups(),
 			"ksyun_lb_register_backend_servers": dataSourceKsyunRegisterBackendServers(),
+			"ksyun_routes":                      dataSourceKsyunRoutes(),
+			"ksyun_nats":                        dataSourceKsyunNats(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"ksyun_eip":                       resourceKsyunEip(),
@@ -104,6 +106,9 @@ func Provider() terraform.ResourceProvider {
 			"ksyun_lb_host_header":             resourceKsyunListenerHostHeader(),
 			"ksyun_lb_backend_server_group":    resourceKsyunBackendServerGroup(),
 			"ksyun_lb_register_backend_server": resourceKsyunRegisterBackendServer(),
+			"ksyun_route":                      resourceKsyunRoute(),
+			"ksyun_nat":                        resourceKsyunNat(),
+			"ksyun_nat_associate":              resourceKsyunNatAssociation(),
 		},
 		ConfigureFunc: providerConfigure,
 	}

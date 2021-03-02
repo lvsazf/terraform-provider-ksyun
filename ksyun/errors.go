@@ -2,6 +2,7 @@ package ksyun
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"strings"
 )
 
@@ -49,6 +50,9 @@ func isNotFoundError(err error) bool {
 
 */
 func notFoundError(err error) bool {
+	if ksyunError, ok := err.(awserr.RequestFailure); ok && ksyunError.StatusCode() == 404 {
+		return true
+	}
 	errMessage := strings.ToLower(err.Error())
 	if strings.Contains(errMessage, "notfound") ||
 		strings.Contains(errMessage, "invalid") ||

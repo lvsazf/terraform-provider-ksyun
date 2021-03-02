@@ -4,6 +4,7 @@ import (
 	"github.com/KscSDK/ksc-sdk-go/service/ebs"
 	"github.com/KscSDK/ksc-sdk-go/service/eip"
 	"github.com/KscSDK/ksc-sdk-go/service/epc"
+	"github.com/KscSDK/ksc-sdk-go/service/iam"
 	"github.com/KscSDK/ksc-sdk-go/service/kcm"
 	"github.com/KscSDK/ksc-sdk-go/service/kcsv1"
 	"github.com/KscSDK/ksc-sdk-go/service/kcsv2"
@@ -33,4 +34,5 @@ type KsyunClient struct {
 	ebsconn       *ebs.Ebs
 	mongodbconn   *mongodb.Mongodb
 	ks3conn       *s3.S3
+	iamconn       *iam.Iam
 }
