@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -110,4 +111,106 @@ func SchemaSetToStringSlice(s interface{}) []string {
 	}
 
 	return vL
+}
+
+func getSdkValue(keyPattern string, obj interface{}) (interface{}, error) {
+	keys := strings.Split(keyPattern, ".")
+	root := obj
+	for index, k := range keys {
+		if reflect.ValueOf(root).Kind() == reflect.Map {
+			root = root.(map[string]interface{})[k]
+			if root == nil {
+				return root, nil
+			}
+
+		} else if reflect.ValueOf(root).Kind() == reflect.Slice {
+			i, err := strconv.Atoi(k)
+			if err != nil {
+				return nil, fmt.Errorf("keyPattern %s index %d must number", keyPattern, index)
+			}
+			if len(root.([]interface{})) < i {
+				return nil, nil
+			}
+			root = root.([]interface{})[i]
+		}
+	}
+	return root, nil
+}
+
+type SliceMappingFunc func(map[string]interface{}) map[string]interface{}
+
+type IdMappingFunc func(string, map[string]interface{}) string
+
+type SdkSliceData struct {
+	IdField          string
+	IdMappingFunc    IdMappingFunc
+	SliceMappingFunc SliceMappingFunc
+	TargetName       string
+}
+
+func sliceMapping(ids []string, data []map[string]interface{}, sdkSliceData SdkSliceData, item interface{}) ([]string, []map[string]interface{}) {
+	if mm, ok := item.(map[string]interface{}); ok {
+		if sdkSliceData.IdMappingFunc != nil && sdkSliceData.IdField != "" {
+			ids = append(ids, sdkSliceData.IdMappingFunc(sdkSliceData.IdField, mm))
+		}
+		if sdkSliceData.SliceMappingFunc != nil {
+			data = append(data, sdkSliceData.SliceMappingFunc(mm))
+		}
+	}
+	return ids, data
+}
+
+func SdkSliceMapping(d *schema.ResourceData, result interface{}, sdkSliceData SdkSliceData) ([]string, []map[string]interface{}, error) {
+	var err error
+	var ids []string
+	ids = []string{}
+	var data []map[string]interface{}
+	data = []map[string]interface{}{}
+
+	if reflect.TypeOf(result).Kind() == reflect.Slice {
+		var length = 0
+		if v, ok := result.([]map[string]interface{}); ok {
+			length = len(v)
+			for _, v1 := range v {
+				ids, data = sliceMapping(ids, data, sdkSliceData, v1)
+			}
+		} else {
+			root := result.([]interface{})
+			length = len(root)
+			for _, v2 := range root {
+				ids, data = sliceMapping(ids, data, sdkSliceData, v2)
+			}
+		}
+
+		if d != nil && sdkSliceData.TargetName != "" {
+			d.SetId(hashStringArray(ids))
+			err = d.Set("total_count", length)
+			if err != nil {
+				return nil, nil, err
+			}
+			err = d.Set(sdkSliceData.TargetName, data)
+			if err != nil {
+				return nil, nil, err
+			}
+			if outputFile, ok := d.GetOk("output_file"); ok && outputFile.(string) != "" {
+				err = writeToFile(outputFile.(string), data)
+				if err != nil {
+					return nil, nil, err
+				}
+			}
+		}
+
+	}
+	return ids, data, nil
+}
+
+func GetSdkParam(d *schema.ResourceData, params []string) map[string]interface{} {
+	sdkParam := make(map[string]interface{})
+	for _, v := range params {
+		if v1, ok := d.GetOk(v); ok {
+			vv := Downline2Hump(v)
+			sdkParam[vv] = fmt.Sprintf("%v", v1)
+		}
+	}
+	return sdkParam
 }

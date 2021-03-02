@@ -53,6 +53,61 @@ func validateSubnetType(v interface{}, k string) (ws []string, errors []error) {
 	return
 }
 
+func validateRouteType(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	if value != "InternetGateway" && value != "Tunnel" && value != "Host" && value != "Peering" && value != "DirectConnect" && value != "Vpn" {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid route type, got error parsing: %s", k, value))
+	}
+	return
+}
+
+func validateNatType(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	if value != "public" {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid nat type, got error parsing: %s", k, value))
+	}
+	return
+}
+
+func validateNatMode(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	if value != "Vpc" && value != "Subnet" {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid nat mode, got error parsing: %s", k, value))
+	}
+	return
+}
+
+func validateNatIpNumber(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(int)
+	if value < 1 || value > 10 {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid nat ip number in 1-10 and control by quota system, got error parsing: %d", k, value))
+	}
+	return
+}
+
+func validateNatBandWidth(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(int)
+	if value < 1 || value > 15000 {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid nat bandwidth in 1-15000 and control by quota system, got error parsing: %d", k, value))
+	}
+	return
+}
+
+func validateNatChargeType(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	if value != "Monthly" && value != "Peak" && value != "Daily" && value != "TrafficMonthly" &&
+		value != "DailyPaidByTransfer" && value != "PostPaidByAdvanced95Peak" {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid nat charge type and control by price system, got error parsing: %s", k, value))
+	}
+	return
+}
+
 //校验Ks3 Bucket name
 /*
 func validateKs3BucketName(value string) error {

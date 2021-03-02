@@ -12,6 +12,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/KscSDK/ksc-sdk-go v0.1.11 h1:8jkv7WxLKhgNWTAyIUJHeE5vKmDpmXZl9Q5AorCdP3E=
 github.com/KscSDK/ksc-sdk-go v0.1.11/go.mod h1:qy4ToQHLtZlj9EXuaPi39vUHniIFFS5+rMhDKBNV1ug=
+github.com/KscSDK/ksc-sdk-go v0.1.12 h1:4ZpJPPIHgsGOEKBEKzUQcIgQuzWVr90nM3h3cfDt5q8=
+github.com/KscSDK/ksc-sdk-go v0.1.12/go.mod h1:qy4ToQHLtZlj9EXuaPi39vUHniIFFS5+rMhDKBNV1ug=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/OpenPeeDeeP/depguard v1.0.1 h1:VlW4R6jmBIv3/u1JNlawEvJMM4J+dPORPaZasQee8Us=
 github.com/OpenPeeDeeP/depguard v1.0.1/go.mod h1:xsIw86fROiiwelg+jB2uM9PiKihMMmUx/1V+TNhjQvM=
