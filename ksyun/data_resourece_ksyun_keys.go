@@ -139,6 +139,41 @@ var subnetKeys = map[string]bool{
 	"AvailbleIPNumber":     true,
 	"AvailabilityZoneName": true,
 }
+
+var routeKeys = map[string]SdkResponseData{
+	"VpcId":                {},
+	"DestinationCidrBlock": {},
+	"RouteType":            {},
+	"CreateTime":           {},
+	"NextHopSet":           {Next: routeNextHop},
+}
+
+var routeNextHop = map[string]SdkResponseData{
+	"GatewayId":   {},
+	"GatewayName": {},
+}
+
+var natKeys = map[string]SdkResponseData{
+	"ProjectId":       {},
+	"CreateTime":      {},
+	"VpcId":           {},
+	"NatName":         {},
+	"NatMode":         {},
+	"NatType":         {},
+	"BandWidth":       {},
+	"NatIpSet":        {Next: natIp},
+	"AssociateNatSet": {Next: associateNat},
+}
+
+var natIp = map[string]SdkResponseData{
+	"NatIp":   {},
+	"NatIpId": {},
+}
+
+var associateNat = map[string]SdkResponseData{
+	"SubnetId": {},
+}
+
 var vpcSecurityGroupKeys = map[string]bool{
 	"CreateTime":            true,
 	"VpcId":                 true,

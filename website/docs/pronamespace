@@ -31,4 +31,7 @@ security_group:            vpc,
 security_group_entry:      vpc,
 subnet:                    vpc,
 vpc:                       vpc,
-ssh_key:                   sks
+ssh_key:                   sks,
+route:                     vpc,
+nat:                       vpc,
+nat_associate:             vpc
