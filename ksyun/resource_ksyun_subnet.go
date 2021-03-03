@@ -32,8 +32,8 @@ func resourceKsyunSubnet() *schema.Resource {
 
 			"cidr_block": {
 				Type:         schema.TypeString,
-				ForceNew:     true,
 				Required:     true,
+				ForceNew:     true,
 				ValidateFunc: validateCIDRNetworkAddress,
 			},
 
@@ -46,15 +46,15 @@ func resourceKsyunSubnet() *schema.Resource {
 
 			"dhcp_ip_to": {
 				Type:         schema.TypeString,
+				Optional:     true,
 				ForceNew:     true,
-				Required:     true,
 				ValidateFunc: validateIpAddress,
 			},
 
 			"dhcp_ip_from": {
 				Type:         schema.TypeString,
+				Optional:     true,
 				ForceNew:     true,
-				Required:     true,
 				ValidateFunc: validateIpAddress,
 			},
 
@@ -143,6 +143,15 @@ func resourceKsyunSubnetCreate(d *schema.ResourceData, meta interface{}) error {
 	if d.Get("subnet_type") != "Reserve" && (d.Get("gateway_ip") == nil || d.Get("gateway_ip") == "") {
 		return fmt.Errorf("subnet_type not Reserve,Must set gateway_ip")
 	}
+
+	if d.Get("subnet_type") != "Reserve" && (d.Get("dhcp_ip_from") == nil || d.Get("dhcp_ip_from") == "") {
+		return fmt.Errorf("subnet_type not Reserve,Must set dhcp_ip_from")
+	}
+
+	if d.Get("subnet_type") != "Reserve" && (d.Get("dhcp_ip_to") == nil || d.Get("dhcp_ip_to") == "") {
+		return fmt.Errorf("subnet_type not Reserve,Must set dhcp_ip_to")
+	}
+
 	action := "CreateSubnet"
 	logger.Debug(logger.ReqFormat, action, createSubnet)
 	resp, err = conn.CreateSubnet(&createSubnet)

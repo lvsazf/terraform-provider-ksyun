@@ -36,16 +36,16 @@ resource "ksyun_subnet" "example" {
 
 The following arguments are supported:
 
-* `subnet_name` - (Required) The name of the subnet.
-* `cidr_block` - (Required) The CIDR block assigned to the subnet.
-* `subnet_type ` - (Required) The type of subnet.Valid Values:'Reserve', 'Normal', 'Physical'.
-* `dhcp_ip_from` - (Required) DHCP start IP.
-* `dhcp_ip_to` - (Required) DHCP end IP.
-* `gateway_ip` - (Required) The IP of gateway.
-* `vpc_id` - (Required) The id of the vpc.
+* `subnet_name` - (Optional) The name of the subnet.
+* `cidr_block` - (Required, ForceNew) The CIDR block assigned to the subnet.
+* `subnet_type ` - (Required, ForceNew) The type of subnet.Valid Values:'Reserve', 'Normal', 'Physical'.
+* `dhcp_ip_from` - (Optional, ForceNew) DHCP start IP.
+* `dhcp_ip_to` - (Optional, ForceNew) DHCP end IP.
+* `gateway_ip` - (Optional, ForceNew) The IP of gateway.
+* `vpc_id` - (Required, ForceNew) The id of the vpc.
 * `dns1` - (Optional) The dns of the subnet.
 * `dns2` - (Optional) The dns of the subnet.
-* `availability_zone` - (Optional) The name of the availability zone. 
+* `availability_zone` - (Optional, ForceNew) The name of the availability zone. 
 
 ## Attributes Reference
 
