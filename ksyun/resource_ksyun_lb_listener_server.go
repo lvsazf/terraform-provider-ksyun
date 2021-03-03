@@ -21,14 +21,17 @@ func resourceKsyunInstancesWithListener() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"listener_id": {
 				Type:     schema.TypeString,
+				ForceNew: true,
 				Required: true,
 			},
 			"instance_id": {
 				Type:     schema.TypeString,
+				ForceNew: true,
 				Optional: true,
 			},
 			"real_server_ip": {
 				Type:     schema.TypeString,
+				ForceNew: true,
 				Required: true,
 			},
 			"real_server_port": {
