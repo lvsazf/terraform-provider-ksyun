@@ -22,11 +22,13 @@ func resourceKsyunSubnet() *schema.Resource {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Optional: true,
+				Computed: true,
 			},
 			"subnet_name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     false,
+				Computed:     true,
 				ValidateFunc: validateName,
 			},
 
@@ -48,6 +50,7 @@ func resourceKsyunSubnet() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
+				Computed:     true,
 				ValidateFunc: validateIpAddress,
 			},
 
@@ -55,6 +58,7 @@ func resourceKsyunSubnet() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
+				Computed:     true,
 				ValidateFunc: validateIpAddress,
 			},
 
@@ -68,6 +72,7 @@ func resourceKsyunSubnet() *schema.Resource {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Optional: true,
+				Computed: true,
 			},
 
 			"dns1": {
@@ -75,6 +80,7 @@ func resourceKsyunSubnet() *schema.Resource {
 				ForceNew:     false,
 				Optional:     true,
 				ValidateFunc: validateIpAddress,
+				Computed:     true,
 			},
 
 			"dns2": {
@@ -82,6 +88,7 @@ func resourceKsyunSubnet() *schema.Resource {
 				ForceNew:     false,
 				Optional:     true,
 				ValidateFunc: validateIpAddress,
+				Computed:     true,
 			},
 			"network_acl_id": {
 				Type:     schema.TypeString,
