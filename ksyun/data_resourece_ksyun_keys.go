@@ -193,6 +193,18 @@ var vpcSecurityGroupEntrySetKeys = map[string]bool{
 	"PortRangeFrom":        true,
 	"PortRangeTo":          true,
 }
+var vpcSecurityGroupEntryKeys = map[string]SdkResponseData{
+	"Description":          {},
+	"SecurityGroupEntryId": {},
+	"CidrBlock":            {},
+	"Direction":            {},
+	"Protocol":             {},
+	"IcmpType":             {},
+	"IcmpCode":             {},
+	"PortRangeFrom":        {},
+	"PortRangeTo":          {},
+}
+
 var instanceKeys = map[string]bool{
 	"InstanceId":            true,
 	"ProjectId":             true,
