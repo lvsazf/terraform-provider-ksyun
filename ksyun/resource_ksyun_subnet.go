@@ -22,11 +22,13 @@ func resourceKsyunSubnet() *schema.Resource {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Optional: true,
+				Computed: true,
 			},
 			"subnet_name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     false,
+				Computed:     true,
 				ValidateFunc: validateName,
 			},
 
@@ -48,6 +50,7 @@ func resourceKsyunSubnet() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
+				Computed:     true,
 				ValidateFunc: validateIpAddress,
 			},
 
@@ -55,6 +58,7 @@ func resourceKsyunSubnet() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
+				Computed:     true,
 				ValidateFunc: validateIpAddress,
 			},
 
@@ -68,6 +72,7 @@ func resourceKsyunSubnet() *schema.Resource {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Optional: true,
+				Computed: true,
 			},
 
 			"dns1": {
@@ -75,6 +80,7 @@ func resourceKsyunSubnet() *schema.Resource {
 				ForceNew:     false,
 				Optional:     true,
 				ValidateFunc: validateIpAddress,
+				Computed:     true,
 			},
 
 			"dns2": {
@@ -82,6 +88,7 @@ func resourceKsyunSubnet() *schema.Resource {
 				ForceNew:     false,
 				Optional:     true,
 				ValidateFunc: validateIpAddress,
+				Computed:     true,
 			},
 			"network_acl_id": {
 				Type:     schema.TypeString,
@@ -193,34 +200,34 @@ func resourceKsyunSubnetRead(d *schema.ResourceData, meta interface{}) error {
 func resourceKsyunSubnetUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*KsyunClient)
 	conn := client.vpcconn
-	d.Partial(true)
+	//d.Partial(true)
 	attributeUpdate := false
 	modifySubnet := make(map[string]interface{})
 	modifySubnet["SubnetId"] = d.Id()
 
-	if d.HasChange("subnet_name") && !d.IsNewResource() {
+	if d.HasChange("subnet_name") && !d.IsNewResource() && d.Get("subnet_name") != "" {
 		modifySubnet["SubnetName"] = fmt.Sprintf("%v", d.Get("subnet_name"))
 		attributeUpdate = true
 	}
-	if d.HasChange("dns1") && !d.IsNewResource() {
+	if d.HasChange("dns1") && !d.IsNewResource() && d.Get("dns1") != "" {
 		modifySubnet["Dns1"] = fmt.Sprintf("%v", d.Get("dns1"))
 		attributeUpdate = true
 	}
-	if d.HasChange("dns2") && !d.IsNewResource() {
-		modifySubnet["Dns2"] = fmt.Sprintf("%v", d.Get("dns2").(string))
+	if d.HasChange("dns2") && !d.IsNewResource() && d.Get("dns2") != "" {
+		modifySubnet["Dns2"] = fmt.Sprintf("%v", d.Get("dns2"))
 		attributeUpdate = true
 	}
 	if attributeUpdate {
 		action := "ModifySubnet"
 		logger.Debug(logger.ReqFormat, action, modifySubnet)
 		resp, err := conn.ModifySubnet(&modifySubnet)
-		logger.Debug(logger.AllFormat, action, modifySubnet, *resp, err)
+		logger.Debug(logger.AllFormat, action, modifySubnet, resp, err)
 		if err != nil {
 			return fmt.Errorf("error on updating Subnet, %s", err)
 		}
-		d.SetPartial("subnet_name")
-		d.SetPartial("dns1")
-		d.SetPartial("dns2")
+		//d.SetPartial("subnet_name")
+		//d.SetPartial("dns1")
+		//d.SetPartial("dns2")
 	}
 	d.Partial(false)
 	return resourceKsyunSubnetRead(d, meta)
