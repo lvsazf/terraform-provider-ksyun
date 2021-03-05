@@ -53,6 +53,23 @@ func validateSubnetType(v interface{}, k string) (ws []string, errors []error) {
 	return
 }
 
+func validateLbState(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	if value != "start" && value != "stop" {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid loadbalancer state, got error parsing: %s", k, value))
+	}
+	return
+}
+func validateLbType(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	if value != "public" && value != "internal" {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid loadbalancer type, got error parsing: %s", k, value))
+	}
+	return
+}
+
 func validateRouteType(v interface{}, k string) (ws []string, errors []error) {
 	value := v.(string)
 	if value != "InternetGateway" && value != "Tunnel" && value != "Host" && value != "Peering" && value != "DirectConnect" && value != "Vpn" {

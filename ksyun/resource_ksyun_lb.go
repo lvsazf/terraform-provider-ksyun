@@ -1,11 +1,12 @@
 package ksyun
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-ksyun/logger"
+	"log"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -23,6 +24,7 @@ func resourceKsyunLb() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"vpc_id": {
 				Type:     schema.TypeString,
+				ForceNew: true,
 				Required: true,
 			},
 			"load_balancer_name": {
@@ -31,17 +33,23 @@ func resourceKsyunLb() *schema.Resource {
 				Computed: true,
 			},
 			"type": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Computed:     true,
+				ValidateFunc: validateLbType,
 			},
 			"subnet_id": {
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
+				Computed: true,
 			},
 			"private_ip_address": {
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
+				Computed: true,
 			},
 
 			"public_ip": {
@@ -58,9 +66,10 @@ func resourceKsyunLb() *schema.Resource {
 				Computed: true,
 			},
 			"load_balancer_state": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validateLbState,
 			},
 			"create_time": {
 				Type:     schema.TypeString,
@@ -73,10 +82,12 @@ func resourceKsyunLb() *schema.Resource {
 			"project_id": {
 				Type:     schema.TypeInt,
 				Optional: true,
+				Computed: true,
 			},
 			"ip_version": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 		},
 	}
@@ -92,13 +103,34 @@ func resourceKsyunLbCreate(d *schema.ResourceData, m interface{}) error {
 	} else {
 		req["LoadBalancerName"] = resource.PrefixedUniqueId("tf-lb-")
 	}
+	if v, ok := d.GetOk("load_balancer_state"); ok {
+		if v == "start" {
+			req["AdminStateUp"] = true
+		} else {
+			req["AdminStateUp"] = false
+		}
+
+	}
+	internalFlag := false
 	if v, ok := d.GetOk("type"); ok {
+		if v == "internal" {
+			internalFlag = true
+		}
 		req["Type"] = fmt.Sprintf("%v", v)
 	}
+
 	if v, ok := d.GetOk("subnet_id"); ok {
+		if !internalFlag {
+			return fmt.Errorf(" Error CreateLoadBalancer : public lb can not set subnet id ")
+		}
 		req["SubnetId"] = fmt.Sprintf("%v", v)
+	} else if internalFlag {
+		return fmt.Errorf(" Error CreateLoadBalancer : internal lb must set subnet id ")
 	}
 	if v, ok := d.GetOk("private_ip_address"); ok {
+		if !internalFlag {
+			return fmt.Errorf(" Error CreateLoadBalancer : public lb can not set private ip address  ")
+		}
 		req["PrivateIpAddress"] = fmt.Sprintf("%v", v)
 	}
 	if v, ok := d.GetOk("project_id"); ok {
@@ -114,11 +146,11 @@ func resourceKsyunLbCreate(d *schema.ResourceData, m interface{}) error {
 	logger.Debug(logger.RespFormat, action, req, *resp)
 	id, ok := (*resp)["LoadBalancerId"]
 	if !ok {
-		return fmt.Errorf("Error CreateLoadBalancer : no LoadBalancerId found")
+		return fmt.Errorf(" Error CreateLoadBalancer : no LoadBalancerId found")
 	}
 	idres, ok := id.(string)
 	if !ok {
-		return fmt.Errorf("Error CreateLoadBalancer : no LoadBalancerId found")
+		return fmt.Errorf(" Error CreateLoadBalancer : no LoadBalancerId found")
 	}
 	if err := d.Set("load_balancer_id", idres); err != nil {
 		return err
@@ -141,36 +173,31 @@ func resourceKsyunLbRead(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("Error DescribeLoadBalancers : %s", err)
 	}
 	logger.Debug(logger.RespFormat, action, req, *resp)
-	type describeLoadBalancersStruct struct {
-		LoadBalancerDescriptions []struct {
-			LoadBalancerId    string
-			LoadBalancerName  string
-			IsWaf             bool
-			Type              string
-			VpcId             string
-			LoadBalancerState string
-			CreateTime        string
-			ListenersCount    int
-			ProjectId         string
-			State             string
-			IpVersion         string
+	if resp != nil {
+		items, ok := (*resp)["LoadBalancerDescriptions"].([]interface{})
+		if !ok || len(items) == 0 {
+			d.SetId("")
+			return nil
+		}
+		SetDByResp(d, items[0], slbKeys, map[string]bool{})
+		//the api return is string,but the resource set is int, so transfer it
+		projectId, _ := getSdkValue("ProjectId", items[0])
+		p, _ := strconv.Atoi(projectId.(string))
+		_ = d.Set("project_id", p)
+		if t, _ := getSdkValue("Type", items[0]); t == "internal" {
+			ip, _ := getSdkValue("PublicIp", items[0])
+			err1 := d.Set("private_ip_address", ip)
+			if err1 != nil {
+				log.Println(err1.Error())
+				panic("ERROR: " + err1.Error())
+			}
+			err2 := d.Set("public_ip", nil)
+			if err2 != nil {
+				log.Println(err2.Error())
+				panic("ERROR: " + err2.Error())
+			}
 		}
 	}
-	by, err := json.Marshal(resp)
-	if err != nil {
-		return fmt.Errorf("Error DescribeLoadBalancers when marshal : %s", err)
-	}
-	var result describeLoadBalancersStruct
-	err = json.Unmarshal(by, &result)
-	if err != nil {
-		return fmt.Errorf("Error DescribeLoadBalancers when unmarshal: %s", err)
-	}
-	if len(result.LoadBalancerDescriptions) == 0 {
-		d.SetId("")
-		return nil
-	}
-	lb0 := result.LoadBalancerDescriptions[0]
-	SetDByResp(d, lb0, slbKeys, map[string]bool{})
 	return nil
 }
 
