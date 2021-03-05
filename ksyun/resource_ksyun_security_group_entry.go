@@ -11,6 +11,7 @@ func resourceKsyunSecurityGroupEntry() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceKsyunSecurityGroupEntryCreate,
 		Read:   resourceKsyunSecurityGroupEntryRead,
+		Update: resourceKsyunSecurityGroupEntryUpdate,
 		Delete: resourceKsyunSecurityGroupEntryDelete,
 		Schema: map[string]*schema.Schema{
 			"description": {
@@ -155,16 +156,32 @@ func resourceKsyunSecurityGroupEntryRead(d *schema.ResourceData, meta interface{
 			continue
 		}
 		if item["security_group_entry_id"] == d.Id() {
-			for sgk, sgv := range item {
-				if vpcSecurityGroupEntrySetKeys[sgk] {
-					if err := d.Set(Downline2Hump(sgk), sgv); err != nil {
-						return err
-					}
-				}
-			}
+			SetResourceDataByResp(d, item, vpcSecurityGroupEntryKeys)
 		}
 	}
 	return nil
+}
+
+func resourceKsyunSecurityGroupEntryUpdate(d *schema.ResourceData, meta interface{}) error {
+	conn := meta.(*KsyunClient).vpcconn
+	attributeUpdate := false
+	modifySecurityGroupEntry := make(map[string]interface{})
+	modifySecurityGroupEntry["SecurityGroupEntryId"] = d.Id()
+
+	if d.HasChange("description") && !d.IsNewResource() && d.Get("description") != "" {
+		modifySecurityGroupEntry["Description"] = fmt.Sprintf("%v", d.Get("description"))
+		attributeUpdate = true
+	}
+	if attributeUpdate {
+		action := "ModifySecurityGroupEntry"
+		logger.Debug(logger.ReqFormat, action, modifySecurityGroupEntry)
+		resp, err := conn.ModifySecurityGroupEntry(&modifySecurityGroupEntry)
+		logger.Debug(logger.AllFormat, action, modifySecurityGroupEntry, *resp, err)
+		if err != nil {
+			return fmt.Errorf("error on updating SecurityGroupEntry, %s", err)
+		}
+	}
+	return resourceKsyunSecurityGroupEntryRead(d, meta)
 }
 
 func resourceKsyunSecurityGroupEntryDelete(d *schema.ResourceData, meta interface{}) error {
