@@ -160,6 +160,28 @@ func sliceMapping(ids []string, data []map[string]interface{}, sdkSliceData SdkS
 	return ids, data
 }
 
+func SdkDataAutoMapping(item map[string]interface{}, extra map[string][]map[string]interface{}) map[string]interface{} {
+	var result map[string]interface{}
+	result = make(map[string]interface{})
+	for k, v := range item {
+		target := Hump2Downline(k)
+		needDefaultMapping := false
+		if extra == nil {
+			needDefaultMapping = true
+		} else {
+			if _, ok := extra[target]; !ok {
+				needDefaultMapping = true
+			}
+		}
+		if needDefaultMapping {
+			result[target] = v
+		} else {
+			result[target] = extra[target]
+		}
+	}
+	return result
+}
+
 func SdkSliceMapping(d *schema.ResourceData, result interface{}, sdkSliceData SdkSliceData) ([]string, []map[string]interface{}, error) {
 	var err error
 	var ids []string
