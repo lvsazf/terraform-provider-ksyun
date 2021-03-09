@@ -69,6 +69,10 @@ func Provider() terraform.ResourceProvider {
 			"ksyun_lb_register_backend_servers": dataSourceKsyunRegisterBackendServers(),
 			"ksyun_routes":                      dataSourceKsyunRoutes(),
 			"ksyun_nats":                        dataSourceKsyunNats(),
+			"ksyun_scaling_configurations":      dataSourceKsyunScalingConfigurations(),
+			"ksyun_scaling_groups":              dataSourceKsyunScalingGroups(),
+			"ksyun_scaling_activities":          dataSourceKsyunScalingActivities(),
+			"ksyun_scaling_instances":           dataSourceKsyunScalingInstances(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"ksyun_eip":                       resourceKsyunEip(),
@@ -109,6 +113,9 @@ func Provider() terraform.ResourceProvider {
 			"ksyun_route":                      resourceKsyunRoute(),
 			"ksyun_nat":                        resourceKsyunNat(),
 			"ksyun_nat_associate":              resourceKsyunNatAssociation(),
+			"ksyun_scaling_configuration":      resourceKsyunScalingConfiguration(),
+			"ksyun_scaling_group":              resourceKsyunScalingGroup(),
+			"ksyun_scaling_instance":           resourceKsyunScalingInstance(),
 		},
 		ConfigureFunc: providerConfigure,
 	}

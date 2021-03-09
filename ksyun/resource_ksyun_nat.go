@@ -125,29 +125,12 @@ func resourceKsyunNatCreate(d *schema.ResourceData, meta interface{}) error {
 
 	var resp *map[string]interface{}
 	var err error
-	creates := []string{
-		"project_id",
-		"vpc_id",
-		"nat_name",
-		"nat_mode",
-		"nat_type",
-		"nat_ip_number",
-		"band_width",
-		"charge_type",
-		"purchase_time",
-	}
-	createNat := make(map[string]interface{})
-	for _, v := range creates {
-		if v1, ok := d.GetOk(v); ok {
-			vv := Downline2Hump(v)
-			createNat[vv] = fmt.Sprintf("%v", v1)
-		}
-	}
 
 	if d.Get("charge_type") == "Monthly" && (d.Get("purchase_time") == nil ||
 		d.Get("purchase_time").(int) < 1 || d.Get("purchase_time").(int) > 15000) {
 		return fmt.Errorf("purchase_time must set on charge_type is Monthly and in 1-15000 ")
 	}
+	createNat, _ := SdkRequestAutoMapping(d, resourceKsyunNat(), false, nil, nil)
 	action := "CreateNat"
 	logger.Debug(logger.ReqFormat, action, createNat)
 	resp, err = conn.CreateNat(&createNat)
@@ -186,7 +169,8 @@ func resourceKsyunNatRead(d *schema.ResourceData, meta interface{}) error {
 			d.SetId("")
 			return nil
 		}
-		SetResourceDataByResp(d, items[0], natKeys)
+		SdkResponseAutoResourceData(d, resourceKsyunNat(), items[0], nil)
+		//SetResourceDataByResp(d, items[0], natKeys)
 	}
 	return nil
 }

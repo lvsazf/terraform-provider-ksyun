@@ -1,6 +1,7 @@
 package ksyun
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -69,12 +70,7 @@ func dataSourceKsyunScalingConfigurations() *schema.Resource {
 							Computed: true,
 						},
 
-						"storage_type": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-
-						"storage_size": {
+						"data_disk_gb": {
 							Type:     schema.TypeInt,
 							Computed: true,
 						},
@@ -109,16 +105,6 @@ func dataSourceKsyunScalingConfigurations() *schema.Resource {
 							Computed: true,
 						},
 
-						"available": {
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-
-						"product_line": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-
 						"instance_name": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -144,13 +130,42 @@ func dataSourceKsyunScalingConfigurations() *schema.Resource {
 							Computed: true,
 						},
 
+						"key_id": {
+							Type:     schema.TypeSet,
+							Computed: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+
 						"system_disk_size": {
 							Type:     schema.TypeInt,
 							Computed: true,
 						},
 
+						"data_disks": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"disk_type": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"disk_size": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"delete_with_instance": {
+										Type:     schema.TypeBool,
+										Computed: true,
+									},
+								},
+							},
+						},
+
 						"instance_name_time_suffix": {
-							Type:     schema.TypeString,
+							Type:     schema.TypeBool,
 							Computed: true,
 						},
 
@@ -158,6 +173,24 @@ func dataSourceKsyunScalingConfigurations() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+
+						"user_date": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+
+						//"scaling_group_id_set": {
+						//	Type:     schema.TypeList,
+						//	Computed: true,
+						//	Elem: &schema.Resource{
+						//		Schema: map[string]*schema.Schema{
+						//			"scaling_group_id": {
+						//				Type:     schema.TypeString,
+						//				Computed: true,
+						//			},
+						//		},
+						//	},
+						//},
 					},
 				},
 			},
@@ -213,26 +246,57 @@ func dataSourceKsyunScalingConfigurationsRead(d *schema.ResourceData, meta inter
 
 	err := dataSourceKsyunScalingConfigurationsSave(d, result)
 	if err != nil {
-		return fmt.Errorf("error on reading nat list, %s", err)
+		return fmt.Errorf("error on reading ScalingConfigurationName list, %s", err)
 	}
 
 	return nil
 }
 
+func scalingConfigurationSpecialMapping() map[string]SdkResponseMapping {
+	specialMapping := make(map[string]SdkResponseMapping)
+	specialMapping["StorageSize"] = SdkResponseMapping{Field: "data_disk_gb"}
+	specialMapping["DataDiskEbsDetail"] = SdkResponseMapping{
+		Field: "data_disks",
+		FieldRespFunc: func(i interface{}) interface{} {
+			var result []map[string]interface{}
+			result = []map[string]interface{}{}
+			v := i.(string)
+			var dat []interface{}
+			if err := json.Unmarshal([]byte(v), &dat); err == nil {
+				for _, v := range dat {
+					d := v.(map[string]interface{})
+					r := make(map[string]interface{})
+					r["delete_with_instance"] = d["deleteWithInstance"]
+					r["disk_size"] = d["size"]
+					r["disk_type"] = d["type"]
+					result = append(result, r)
+				}
+			}
+			return result
+		},
+	}
+	return specialMapping
+}
+
 func dataSourceKsyunScalingConfigurationsSave(d *schema.ResourceData, result []map[string]interface{}) error {
-	logger.Debug(logger.ReqFormat, "DescribeScalingConfiguration", d)
+	resource := dataSourceKsyunScalingConfigurations()
+	targetName := "scaling_configurations"
 	_, _, err := SdkSliceMapping(d, result, SdkSliceData{
 		IdField: "ScalingConfigurationId",
 		IdMappingFunc: func(idField string, item map[string]interface{}) string {
 			return item["ScalingConfigurationId"].(string)
 		},
 		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
-
-			return map[string]interface{}{
-				"scaling_configuration_name": item["ScalingConfigurationName"],
-			}
+			//_, aaa, _ := SdkSliceMapping(nil, item["ScalingGroupIdSet"].([]interface{}), SdkSliceData{
+			//	SliceMappingFunc: func(group map[string]interface{}) map[string]interface{} {
+			//		return SdkResponseAutoMapping(resource, targetName+".scaling_group_id_set", group, nil, nil)
+			//	},
+			//})
+			//extra := make(map[string][]map[string]interface{})
+			//extra["scaling_group_id_set"] = aaa
+			return SdkResponseAutoMapping(resource, targetName, item, nil, scalingConfigurationSpecialMapping())
 		},
-		TargetName: "scaling_configurations",
+		TargetName: targetName,
 	})
 	return err
 }
