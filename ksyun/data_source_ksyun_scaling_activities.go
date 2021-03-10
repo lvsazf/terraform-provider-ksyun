@@ -146,7 +146,7 @@ func dataSourceKsyunScalingActivitiesSave(d *schema.ResourceData, result []map[s
 			return item[idField].(string)
 		},
 		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
-			return SdkResponseAutoMapping(resource, targetName, item, nil, scalingActivitySpecialMapping())
+			return SdkResponseAutoMapping(resource, targetName, item, nil, nil, scalingActivitySpecialMapping())
 		},
 		TargetName: targetName,
 	})

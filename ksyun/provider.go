@@ -73,6 +73,9 @@ func Provider() terraform.ResourceProvider {
 			"ksyun_scaling_groups":              dataSourceKsyunScalingGroups(),
 			"ksyun_scaling_activities":          dataSourceKsyunScalingActivities(),
 			"ksyun_scaling_instances":           dataSourceKsyunScalingInstances(),
+			"ksyun_scaling_policies":            dataSourceKsyunScalingPolicies(),
+			"ksyun_scaling_scheduled_tasks":     dataSourceKsyunScalingScheduledTasks(),
+			"ksyun_scaling_notifications":       dataSourceKsyunScalingNotifications(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"ksyun_eip":                       resourceKsyunEip(),
@@ -116,6 +119,9 @@ func Provider() terraform.ResourceProvider {
 			"ksyun_scaling_configuration":      resourceKsyunScalingConfiguration(),
 			"ksyun_scaling_group":              resourceKsyunScalingGroup(),
 			"ksyun_scaling_instance":           resourceKsyunScalingInstance(),
+			"ksyun_scaling_policy":             resourceKsyunScalingPolicy(),
+			"ksyun_scaling_scheduled_task":     resourceKsyunScalingScheduledTask(),
+			"ksyun_scaling_notification":       resourceKsyunScalingNotification(),
 		},
 		ConfigureFunc: providerConfigure,
 	}

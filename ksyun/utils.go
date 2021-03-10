@@ -161,6 +161,16 @@ func sliceMapping(ids []string, data []map[string]interface{}, sdkSliceData SdkS
 	return ids, data
 }
 
+func mapMapping(sdkSliceData SdkSliceData, item interface{}) map[string]interface{} {
+	data := make(map[string]interface{})
+	if mm, ok := item.(map[string]interface{}); ok {
+		if sdkSliceData.SliceMappingFunc != nil {
+			data = sdkSliceData.SliceMappingFunc(mm)
+		}
+	}
+	return data
+}
+
 func getSchemeElem(resource *schema.Resource, keys []string) *schema.Resource {
 	r := resource
 	if r == nil {
@@ -286,14 +296,21 @@ func SdkResponseAutoResourceData(d *schema.ResourceData, resource *schema.Resour
 	return nil
 }
 
-func SdkResponseAutoMapping(resource *schema.Resource, collectField string, item map[string]interface{},
-	extra map[string][]map[string]interface{}, extraMapping map[string]SdkResponseMapping) map[string]interface{} {
+func SdkResponseAutoMapping(resource *schema.Resource, collectField string, item map[string]interface{}, computeItem map[string]interface{},
+	extra map[string]interface{}, extraMapping map[string]SdkResponseMapping) map[string]interface{} {
 	var result map[string]interface{}
 	result = make(map[string]interface{})
 	keys := strings.Split(collectField, ".")
 	if len(keys) == 0 {
 		return result
 	}
+
+	if computeItem != nil {
+		for k, v := range computeItem {
+			item[k] = v
+		}
+	}
+
 	if _, ok := resource.Schema[keys[0]]; ok {
 		elem := getSchemeElem(resource, keys)
 		for k, v := range item {
@@ -376,6 +393,10 @@ func SdkSliceMapping(d *schema.ResourceData, result interface{}, sdkSliceData Sd
 			}
 		}
 
+	} else if reflect.TypeOf(result).Kind() == reflect.Map {
+		if v, ok := result.(map[string]interface{}); ok {
+			data = append(data, mapMapping(sdkSliceData, v))
+		}
 	}
 	return ids, data, nil
 }

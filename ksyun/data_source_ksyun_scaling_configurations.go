@@ -294,7 +294,7 @@ func dataSourceKsyunScalingConfigurationsSave(d *schema.ResourceData, result []m
 			//})
 			//extra := make(map[string][]map[string]interface{})
 			//extra["scaling_group_id_set"] = aaa
-			return SdkResponseAutoMapping(resource, targetName, item, nil, scalingConfigurationSpecialMapping())
+			return SdkResponseAutoMapping(resource, targetName, item, nil, nil, scalingConfigurationSpecialMapping())
 		},
 		TargetName: targetName,
 	})

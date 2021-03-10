@@ -143,7 +143,7 @@ func dataSourceKsyunScalingInstancesSave(d *schema.ResourceData, result []map[st
 			return item[idField].(string) + ":" + d.Get("scaling_group_id").(string)
 		},
 		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
-			return SdkResponseAutoMapping(resource, targetName, item, nil, scalingInstanceSpecialMapping())
+			return SdkResponseAutoMapping(resource, targetName, item, nil, nil, scalingInstanceSpecialMapping())
 		},
 		TargetName: targetName,
 	})

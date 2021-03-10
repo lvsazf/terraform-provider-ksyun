@@ -233,16 +233,16 @@ func dataSourceKsyunScalingGroupsSave(d *schema.ResourceData, result []map[strin
 			return item["ScalingGroupId"].(string)
 		},
 		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
-			extra := make(map[string][]map[string]interface{})
+			extra := make(map[string]interface{})
 			if item["SlbConfigSet"] != nil {
 				_, slbs, _ := SdkSliceMapping(nil, item["SlbConfigSet"].([]interface{}), SdkSliceData{
 					SliceMappingFunc: func(group map[string]interface{}) map[string]interface{} {
-						return SdkResponseAutoMapping(resource, targetName+".slb_config_set", group, nil, nil)
+						return SdkResponseAutoMapping(resource, targetName+".slb_config_set", group, nil, nil, nil)
 					},
 				})
 				extra["slb_config_set"] = slbs
 			}
-			return SdkResponseAutoMapping(resource, targetName, item, extra, nil)
+			return SdkResponseAutoMapping(resource, targetName, item, nil, extra, nil)
 		},
 		TargetName: targetName,
 	})
