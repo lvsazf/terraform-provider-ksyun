@@ -134,14 +134,13 @@ func dataSourceKsyunScalingScheduledTasksRead(d *schema.ResourceData, meta inter
 	result = []map[string]interface{}{}
 	req := make(map[string]interface{})
 
-	if ids, ok := d.GetOk("ids"); ok {
-		SchemaSetToInstanceMap(ids, "ScalingScheduledTaskId", &req)
+	var only map[string]SdkReqTransform
+	only = map[string]SdkReqTransform{
+		"ids":                         {mapping: "ScalingScheduledTaskId", Type: TransformWithN},
+		"scaling_group_id":            {},
+		"scaling_scheduled_task_name": {},
 	}
-	var only []string
-	only = []string{
-		"scaling_group_id",
-		"scaling_scheduled_task_name",
-	}
+
 	req, err = SdkRequestAutoMapping(d, resource, false, only, nil)
 	if err != nil {
 		return fmt.Errorf("error on reading ScalingScheduledTask list, %s", err)
@@ -191,7 +190,7 @@ func dataSourceKsyunScalingScheduledTasksSave(d *schema.ResourceData, result []m
 	_, _, err := SdkSliceMapping(d, result, SdkSliceData{
 		IdField: "ScalingScheduledTaskId",
 		IdMappingFunc: func(idField string, item map[string]interface{}) string {
-			return item["ScalingGroupId"].(string) + ":" + item[idField].(string)
+			return item[idField].(string) + ":" + item["ScalingGroupId"].(string)
 		},
 		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
 			return SdkResponseAutoMapping(resource, targetName, item, nil, nil, nil)

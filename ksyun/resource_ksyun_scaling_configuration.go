@@ -124,7 +124,7 @@ func resourceKsyunScalingConfiguration() *schema.Resource {
 				Computed: true,
 			},
 
-			"user_date": {
+			"user_data": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,

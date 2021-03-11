@@ -158,7 +158,7 @@ func resourceKsyunScalingPolicyCreate(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("error on creating ScalingPolicy, %s", err)
 	}
 	if resp != nil {
-		d.SetId(req["ScalingGroupId"].(string) + ":" + (*resp)["ReturnSet"].(map[string]interface{})["ScalingPolicyId"].(string))
+		d.SetId((*resp)["ReturnSet"].(map[string]interface{})["ScalingPolicyId"].(string) + ":" + req["ScalingGroupId"].(string))
 	}
 	return resourceKsyunScalingPolicyRead(d, meta)
 }
@@ -175,8 +175,8 @@ func resourceKsyunScalingPolicyUpdate(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("error on modifying ScalingPolicy, %s", err)
 	}
 	if len(req) > 0 {
-		req["ScalingGroupId"] = strings.Split(d.Id(), ":")[0]
-		req["ScalingPolicyId"] = strings.Split(d.Id(), ":")[1]
+		req["ScalingGroupId"] = strings.Split(d.Id(), ":")[1]
+		req["ScalingPolicyId"] = strings.Split(d.Id(), ":")[0]
 		action := "ModifyScalingPolicy"
 		logger.Debug(logger.ReqFormat, action, req)
 		_, err = conn.ModifyScalingPolicy(&req)
@@ -192,8 +192,8 @@ func resourceKsyunScalingPolicyRead(d *schema.ResourceData, meta interface{}) er
 	conn := client.kecconn
 
 	req := make(map[string]interface{})
-	req["ScalingGroupId"] = strings.Split(d.Id(), ":")[0]
-	req["ScalingPolicyId.1"] = strings.Split(d.Id(), ":")[1]
+	req["ScalingGroupId"] = strings.Split(d.Id(), ":")[1]
+	req["ScalingPolicyId.1"] = strings.Split(d.Id(), ":")[0]
 	action := "DescribeScalingPolicy"
 	logger.Debug(logger.ReqFormat, action, req)
 	resp, err := conn.DescribeScalingPolicy(&req)
@@ -216,8 +216,8 @@ func resourceKsyunScalingPolicyDelete(d *schema.ResourceData, meta interface{}) 
 	client := meta.(*KsyunClient)
 	conn := client.kecconn
 	req := make(map[string]interface{})
-	req["ScalingGroupId"] = strings.Split(d.Id(), ":")[0]
-	req["ScalingPolicyId"] = strings.Split(d.Id(), ":")[1]
+	req["ScalingGroupId"] = strings.Split(d.Id(), ":")[1]
+	req["ScalingPolicyId"] = strings.Split(d.Id(), ":")[0]
 	action := "DeleteScalingPolicy"
 
 	return resource.Retry(25*time.Minute, func() *resource.RetryError {

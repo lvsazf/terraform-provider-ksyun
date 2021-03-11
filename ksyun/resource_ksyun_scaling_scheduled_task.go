@@ -4,10 +4,17 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-ksyun/logger"
 	"strings"
 	"time"
 )
+
+var ksyunScalingScheduledTaskRepeatUnit = []string{
+	"Day",
+	"Month",
+	"Week",
+}
 
 func resourceKsyunScalingScheduledTask() *schema.Resource {
 	return &schema.Resource{
@@ -64,8 +71,9 @@ func resourceKsyunScalingScheduledTask() *schema.Resource {
 			},
 
 			"repeat_unit": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice(ksyunScalingScheduledTaskRepeatUnit, false),
 			},
 
 			"repeat_cycle": {
@@ -121,7 +129,7 @@ func resourceKsyunScalingScheduledTaskCreate(d *schema.ResourceData, meta interf
 		return fmt.Errorf("error on creating ScalingScheduledTask, %s", err)
 	}
 	if resp != nil {
-		d.SetId(req["ScalingGroupId"].(string) + ":" + (*resp)["ReturnSet"].(map[string]interface{})["ScalingScheduleTaskId"].(string))
+		d.SetId((*resp)["ReturnSet"].(map[string]interface{})["ScalingScheduleTaskId"].(string) + ":" + req["ScalingGroupId"].(string))
 	}
 	return resourceKsyunScalingScheduledTaskRead(d, meta)
 }
@@ -138,8 +146,8 @@ func resourceKsyunScalingScheduledTaskUpdate(d *schema.ResourceData, meta interf
 		return fmt.Errorf("error on modifying ScalingScheduledTask, %s", err)
 	}
 	if len(req) > 0 {
-		req["ScalingGroupId"] = strings.Split(d.Id(), ":")[0]
-		req["ScalingScheduledTaskId"] = strings.Split(d.Id(), ":")[1]
+		req["ScalingGroupId"] = strings.Split(d.Id(), ":")[1]
+		req["ScalingScheduledTaskId"] = strings.Split(d.Id(), ":")[0]
 		action := "ModifyScheduledTask"
 		logger.Debug(logger.ReqFormat, action, req)
 		_, err = conn.ModifyScheduledTask(&req)
@@ -155,8 +163,8 @@ func resourceKsyunScalingScheduledTaskRead(d *schema.ResourceData, meta interfac
 	conn := client.kecconn
 
 	req := make(map[string]interface{})
-	req["ScalingGroupId"] = strings.Split(d.Id(), ":")[0]
-	req["ScalingScheduledTaskId.1"] = strings.Split(d.Id(), ":")[1]
+	req["ScalingGroupId"] = strings.Split(d.Id(), ":")[1]
+	req["ScalingScheduledTaskId.1"] = strings.Split(d.Id(), ":")[0]
 	action := "DescribeScheduledTask"
 	logger.Debug(logger.ReqFormat, action, req)
 	resp, err := conn.DescribeScheduledTask(&req)
@@ -178,8 +186,8 @@ func resourceKsyunScalingScheduledTaskDelete(d *schema.ResourceData, meta interf
 	client := meta.(*KsyunClient)
 	conn := client.kecconn
 	req := make(map[string]interface{})
-	req["ScalingGroupId"] = strings.Split(d.Id(), ":")[0]
-	req["ScalingScheduledTaskId"] = strings.Split(d.Id(), ":")[1]
+	req["ScalingGroupId"] = strings.Split(d.Id(), ":")[1]
+	req["ScalingScheduledTaskId"] = strings.Split(d.Id(), ":")[0]
 	action := "DeleteScalingScheduledTask"
 
 	return resource.Retry(25*time.Minute, func() *resource.RetryError {

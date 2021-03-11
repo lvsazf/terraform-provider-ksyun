@@ -126,11 +126,11 @@ func resourceKsyunNatCreate(d *schema.ResourceData, meta interface{}) error {
 	var resp *map[string]interface{}
 	var err error
 
-	if d.Get("charge_type") == "Monthly" && (d.Get("purchase_time") == nil ||
-		d.Get("purchase_time").(int) < 1 || d.Get("purchase_time").(int) > 15000) {
-		return fmt.Errorf("purchase_time must set on charge_type is Monthly and in 1-15000 ")
-	}
 	createNat, _ := SdkRequestAutoMapping(d, resourceKsyunNat(), false, nil, nil)
+	err = validatePurchaseTime(&createNat, "purchase_time", "charge_type", []string{"Monthly"})
+	if err != nil {
+		return fmt.Errorf("error on creating nat, %s", err)
+	}
 	action := "CreateNat"
 	logger.Debug(logger.ReqFormat, action, createNat)
 	resp, err = conn.CreateNat(&createNat)

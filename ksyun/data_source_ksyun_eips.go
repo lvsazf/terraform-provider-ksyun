@@ -193,7 +193,7 @@ func dataSourceKsyunEipsRead(d *schema.ResourceData, meta interface{}) error {
 		"ip_version":           {},
 	}
 
-	req, err = SdkRequestAutoMappingNew(d, r, false, only, nil)
+	req, err = SdkRequestAutoMapping(d, r, false, only, nil)
 	if err != nil {
 		return fmt.Errorf("error on reading Addresses list, %s", err)
 	}

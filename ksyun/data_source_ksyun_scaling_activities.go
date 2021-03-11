@@ -99,11 +99,11 @@ func dataSourceKsyunScalingActivitiesRead(d *schema.ResourceData, meta interface
 	result = []map[string]interface{}{}
 	req := make(map[string]interface{})
 
-	var only []string
-	only = []string{
-		"scaling_group_id",
-		"end_time",
-		"start_time",
+	var only map[string]SdkReqTransform
+	only = map[string]SdkReqTransform{
+		"scaling_group_id": {},
+		"end_time":         {},
+		"start_time":       {},
 	}
 	req, err = SdkRequestAutoMapping(d, r, false, only, nil)
 	if err != nil {
@@ -143,7 +143,7 @@ func dataSourceKsyunScalingActivitiesSave(d *schema.ResourceData, result []map[s
 	_, _, err := SdkSliceMapping(d, result, SdkSliceData{
 		IdField: "ScalingActivityId",
 		IdMappingFunc: func(idField string, item map[string]interface{}) string {
-			return item[idField].(string)
+			return item[idField].(string) + ":" + item["ScalingGroupId"].(string)
 		},
 		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
 			return SdkResponseAutoMapping(resource, targetName, item, nil, nil, scalingActivitySpecialMapping())

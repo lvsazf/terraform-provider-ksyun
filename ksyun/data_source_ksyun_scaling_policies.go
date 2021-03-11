@@ -134,14 +134,13 @@ func dataSourceKsyunScalingPoliciesRead(d *schema.ResourceData, meta interface{}
 	result = []map[string]interface{}{}
 	req := make(map[string]interface{})
 
-	if ids, ok := d.GetOk("ids"); ok {
-		SchemaSetToInstanceMap(ids, "ScalingPolicyId", &req)
+	var only map[string]SdkReqTransform
+	only = map[string]SdkReqTransform{
+		"ids":                   {mapping: "ScalingPolicyId", Type: TransformWithN},
+		"scaling_group_id":      {},
+		"scaling_policies_name": {},
 	}
-	var only []string
-	only = []string{
-		"scaling_group_id",
-		"scaling_policies_name",
-	}
+
 	req, err = SdkRequestAutoMapping(d, resource, false, only, nil)
 	if err != nil {
 		return fmt.Errorf("error on reading ScalingPolicy list, %s", err)
@@ -191,19 +190,16 @@ func dataSourceKsyunScalingPoliciesSave(d *schema.ResourceData, result []map[str
 	_, _, err := SdkSliceMapping(d, result, SdkSliceData{
 		IdField: "ScalingPolicyId",
 		IdMappingFunc: func(idField string, item map[string]interface{}) string {
-			return item["ScalingGroupId"].(string) + ":" + item[idField].(string)
+			return item[idField].(string) + ":" + item["ScalingGroupId"].(string)
 		},
 		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
-			compute := make(map[string]interface{})
+			var compute map[string]interface{}
 			if item["Metric"] != nil {
-				_, metric, _ := SdkSliceMapping(d, item["Metric"].(map[string]interface{}), SdkSliceData{
+				compute, _ = SdkMapMapping(item["Metric"].(map[string]interface{}), SdkSliceData{
 					SliceMappingFunc: func(m map[string]interface{}) map[string]interface{} {
 						return SdkResponseAutoMapping(resource, targetName, m, nil, nil, nil)
 					},
 				})
-				if len(metric) > 0 {
-					compute = metric[0]
-				}
 			}
 			return SdkResponseAutoMapping(resource, targetName, item, compute, nil, nil)
 		},

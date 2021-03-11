@@ -46,15 +46,16 @@ func dataSourceKsyunScalingConfigurations() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"available": {
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
 			"scaling_configurations": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+
+						"scaling_configuration_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 
 						"scaling_configuration_name": {
 							Type:     schema.TypeString,
@@ -174,7 +175,7 @@ func dataSourceKsyunScalingConfigurations() *schema.Resource {
 							Computed: true,
 						},
 
-						"user_date": {
+						"user_data": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},

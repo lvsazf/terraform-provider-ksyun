@@ -110,7 +110,7 @@ func resourceKsyunEipCreate(d *schema.ResourceData, meta interface{}) error {
 	var resp *map[string]interface{}
 	var err error
 
-	req, err := SdkRequestAutoMappingNew(d, r, false, nil, nil)
+	req, err := SdkRequestAutoMapping(d, r, false, nil, nil)
 	if err != nil {
 		return fmt.Errorf("error on creating Address, %s", err)
 	}
@@ -171,7 +171,7 @@ func resourceKsyunEipUpdate(d *schema.ResourceData, meta interface{}) error {
 		"band_width": {},
 	}
 
-	req, err := SdkRequestAutoMappingNew(d, r, true, only, nil)
+	req, err := SdkRequestAutoMapping(d, r, true, only, nil)
 	if err != nil {
 		return fmt.Errorf("error on modifying Address, %s", err)
 	}

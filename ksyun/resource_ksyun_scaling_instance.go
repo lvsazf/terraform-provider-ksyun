@@ -34,7 +34,7 @@ func resourceKsyunScalingInstance() *schema.Resource {
 				ValidateFunc: validateKecInstanceAgent,
 			},
 
-			"instance_name": {
+			"scaling_instance_name": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -70,10 +70,10 @@ func resourceKsyunScalingInstanceCreate(d *schema.ResourceData, meta interface{}
 
 	var err error
 
-	var only []string
-	only = []string{
-		"scaling_group_id",
-		"scaling_instance_id",
+	var only map[string]SdkReqTransform
+	only = map[string]SdkReqTransform{
+		"scaling_group_id":    {},
+		"scaling_instance_id": {},
 	}
 
 	req, err := SdkRequestAutoMapping(d, r, false, only, resourceKsyunScalingInstanceExtra())
@@ -108,9 +108,9 @@ func resourceKsyunScalingInstanceUpdate(d *schema.ResourceData, meta interface{}
 
 	var err error
 
-	var only []string
-	only = []string{
-		"protected_from_detach",
+	var only map[string]SdkReqTransform
+	only = map[string]SdkReqTransform{
+		"protected_from_detach": {},
 	}
 
 	req, err := SdkRequestAutoMapping(d, r, false, only, resourceKsyunScalingInstanceExtra())

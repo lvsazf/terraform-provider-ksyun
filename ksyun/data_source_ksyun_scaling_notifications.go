@@ -63,10 +63,11 @@ func dataSourceKsyunScalingNotificationsRead(d *schema.ResourceData, meta interf
 	result = []map[string]interface{}{}
 	req := make(map[string]interface{})
 
-	var only []string
-	only = []string{
-		"scaling_group_id",
+	var only map[string]SdkReqTransform
+	only = map[string]SdkReqTransform{
+		"scaling_group_id": {},
 	}
+
 	req, err = SdkRequestAutoMapping(d, resource, false, only, nil)
 	if err != nil {
 		return fmt.Errorf("error on reading ScalingNotification list, %s", err)
@@ -76,6 +77,9 @@ func dataSourceKsyunScalingNotificationsRead(d *schema.ResourceData, meta interf
 	resp, err := client.kecconn.DescribeScalingNotification(&req)
 	if err != nil {
 		return fmt.Errorf("error on reading ScalingNotification list req(%v):%v", req, err)
+	}
+	if (*resp)["ScalingNotificationSet"] == nil {
+		return nil
 	}
 	l := (*resp)["ScalingNotificationSet"].([]interface{})
 
@@ -94,7 +98,7 @@ func dataSourceKsyunScalingNotificationsSave(d *schema.ResourceData, result []ma
 	_, _, err := SdkSliceMapping(d, result, SdkSliceData{
 		IdField: "ScalingNotificationId",
 		IdMappingFunc: func(idField string, item map[string]interface{}) string {
-			return item["ScalingGroupId"].(string) + ":" + item[idField].(string)
+			return item[idField].(string) + ":" + item["ScalingGroupId"].(string)
 		},
 		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
 			return SdkResponseAutoMapping(resource, targetName, item, nil, nil, nil)

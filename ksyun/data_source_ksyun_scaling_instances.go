@@ -51,7 +51,7 @@ func dataSourceKsyunScalingInstances() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"instance_name": {
+						"scaling_instance_name": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -92,12 +92,13 @@ func dataSourceKsyunScalingInstancesRead(d *schema.ResourceData, meta interface{
 	result = []map[string]interface{}{}
 	req := make(map[string]interface{})
 
-	var only []string
-	only = []string{
-		"scaling_group_id",
-		"health_status",
-		"creation_type",
+	var only map[string]SdkReqTransform
+	only = map[string]SdkReqTransform{
+		"scaling_group_id": {},
+		"health_status":    {},
+		"creation_type":    {},
 	}
+
 	req, err = SdkRequestAutoMapping(d, r, false, only, nil)
 	if err != nil {
 		return fmt.Errorf("error on reading ScalingInstance list, %s", err)
@@ -153,6 +154,7 @@ func dataSourceKsyunScalingInstancesSave(d *schema.ResourceData, result []map[st
 func scalingInstanceSpecialMapping() map[string]SdkResponseMapping {
 	specialMapping := make(map[string]SdkResponseMapping)
 	specialMapping["InstanceId"] = SdkResponseMapping{Field: "scaling_instance_id"}
+	specialMapping["InstanceName"] = SdkResponseMapping{Field: "scaling_instance_name"}
 	specialMapping["ProtectedFromScaleIn"] = SdkResponseMapping{Field: "protected_from_detach"}
 	return specialMapping
 }

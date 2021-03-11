@@ -98,7 +98,7 @@ func resourceKsyunEipAssociationCreate(d *schema.ResourceData, meta interface{})
 
 	var err error
 
-	req, err := SdkRequestAutoMappingNew(d, r, false, nil, nil)
+	req, err := SdkRequestAutoMapping(d, r, false, nil, nil)
 	if err != nil {
 		return fmt.Errorf("error on creating AssociateAddress, %s", err)
 	}

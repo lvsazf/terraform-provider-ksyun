@@ -51,6 +51,11 @@ func dataSourceKsyunScalingGroups() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 
+						"scaling_group_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+
 						"scaling_group_name": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -172,15 +177,14 @@ func dataSourceKsyunScalingGroupsRead(d *schema.ResourceData, meta interface{}) 
 	result = []map[string]interface{}{}
 	req := make(map[string]interface{})
 
-	if ids, ok := d.GetOk("ids"); ok {
-		SchemaSetToInstanceMap(ids, "ScalingGroupId", &req)
+	var only map[string]SdkReqTransform
+	only = map[string]SdkReqTransform{
+		"ids":                      {mapping: "ScalingGroupId", Type: TransformWithN},
+		"scaling_group_name":       {},
+		"scaling_configuration_id": {},
+		"vpc_id":                   {},
 	}
-	var only []string
-	only = []string{
-		"scaling_group_name",
-		"scaling_configuration_id",
-		"vpc_id",
-	}
+
 	req, err = SdkRequestAutoMapping(d, r, false, only, resourceKsyunScalingGroupExtra())
 	if err != nil {
 		return fmt.Errorf("error on reading ScalingGroup list, %s", err)
