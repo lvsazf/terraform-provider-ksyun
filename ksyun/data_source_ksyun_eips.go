@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/terraform-providers/terraform-provider-ksyun/logger"
 )
 
 func dataSourceKsyunEips() *schema.Resource {
@@ -17,11 +18,6 @@ func dataSourceKsyunEips() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Set: schema.HashString,
-			},
-			"name_regex": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.ValidateRegexp,
 			},
 			"project_id": {
 				Type:     schema.TypeSet,
@@ -49,7 +45,7 @@ func dataSourceKsyunEips() *schema.Resource {
 				},
 				Set: schema.HashString,
 			},
-			"instance_type": {
+			"internet_gateway_id": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Schema{
@@ -57,7 +53,7 @@ func dataSourceKsyunEips() *schema.Resource {
 				},
 				Set: schema.HashString,
 			},
-			"internet_gateway_id": {
+			"instance_type": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Schema{
@@ -88,6 +84,15 @@ func dataSourceKsyunEips() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Set: schema.HashString,
+			},
+			"ip_version": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"ipv4",
+					"ipv6",
+					"all",
+				}, false),
 			},
 			"eips": {
 				Type:     schema.TypeList,
@@ -161,82 +166,77 @@ func dataSourceKsyunEips() *schema.Resource {
 	}
 }
 
-func dataSourceKsyunEipsRead(d *schema.ResourceData, m interface{}) error {
-	conn := m.(*KsyunClient).eipconn
-	var eips []string
+func dataSourceKsyunEipsRead(d *schema.ResourceData, meta interface{}) error {
+	var result []map[string]interface{}
+	var all []interface{}
+	var err error
+	r := dataSourceKsyunEips()
+
+	limit := 500
+	offset := 1
+
+	client := meta.(*KsyunClient)
+	all = []interface{}{}
+	result = []map[string]interface{}{}
 	req := make(map[string]interface{})
 
-	if ids, ok := d.GetOk("ids"); ok {
-		eips = SchemaSetToStringSlice(ids)
-	}
-	for k, v := range eips {
-		if v == "" {
-			continue
-		}
-		req[fmt.Sprintf("AllocationId.%d", k+1)] = v
-	}
-	var projectIds []string
-	if ids, ok := d.GetOk("project_id"); ok {
-		projectIds = SchemaSetToStringSlice(ids)
+	var only map[string]SdkReqTransform
+
+	only = map[string]SdkReqTransform{
+		"ids":                  {mapping: "AllocationId", Type: TransformWithN},
+		"project_id":           {Type: TransformWithN},
+		"network_interface_id": {Type: TransformWithFilter},
+		"instance_type":        {Type: TransformWithFilter},
+		"band_width_share_id":  {Type: TransformWithFilter},
+		"line_id":              {Type: TransformWithFilter},
+		"public_ip":            {Type: TransformWithFilter},
+		"ip_version":           {},
 	}
 
-	for k, v := range projectIds {
-		if v == "" {
-			continue
-		}
-		req[fmt.Sprintf("ProjectId.%d", k+1)] = v
+	req, err = SdkRequestAutoMapping(d, r, false, only, nil)
+	if err != nil {
+		return fmt.Errorf("error on reading Addresses list, %s", err)
 	}
 
-	filters := []string{
-		"network_interface_id",
-		"instance_type",
-		"internet_gateway_id",
-		"band_width_share_id",
-		"line_id",
-		"public_ip",
-		"project_id",
-	}
-	req = *SchemaSetsToFilterMap(d, filters, &req)
-
-	var allEips []interface{}
-	var limit int = 100
-	var nextToken string
 	for {
 		req["MaxResults"] = limit
-		if nextToken != "" {
-			req["NextToken"] = nextToken
-		}
-		resp, err := conn.DescribeAddresses(&req)
-		if err != nil {
-			return fmt.Errorf("error on reading eip list req(%v):%v", req, err)
-		}
-		itemSet, ok := (*resp)["AddressesSet"]
-		if !ok {
-			//return fmt.Errorf("error on reading eip set")
-			break
-		}
-		items, ok := itemSet.([]interface{})
-		if !ok {
-			break
-		}
-		if items == nil || len(items) < 1 {
-			break
-		}
-		allEips = append(allEips, items...)
+		req["Marker"] = offset
 
-		if len(items) < limit {
+		logger.Debug(logger.ReqFormat, "DescribeAddresses", req)
+		resp, err := client.eipconn.DescribeAddresses(&req)
+		if err != nil {
+			return fmt.Errorf("error on reading Addresses list req(%v):%v", req, err)
+		}
+		l := (*resp)["AddressesSet"].([]interface{})
+		all = append(all, l...)
+		if len(l) < limit {
 			break
 		}
-		if nextTokens, ok := (*resp)["NextToken"]; ok {
-			nextToken = fmt.Sprintf("%v", nextTokens)
-		} else {
-			break
-		}
+
+		offset = offset + limit
 	}
-	datas := GetSubSliceDByRep(allEips, eipKeys)
-	err := dataSourceKscSave(d, "eips", eips, datas)
+
+	merageResultDirect(&result, all)
+
+	err = dataSourceKsyunEipsSave(d, result)
 	if err != nil {
-		return fmt.Errorf("error on save eip list, %s", err)
+		return fmt.Errorf("error on reading Addresses list, %s", err)
 	}
 	return nil
+}
+
+func dataSourceKsyunEipsSave(d *schema.ResourceData, result []map[string]interface{}) error {
+	resource := dataSourceKsyunEips()
+	targetName := "eips"
+	_, _, err := SdkSliceMapping(d, result, SdkSliceData{
+		IdField: "AllocationId",
+		IdMappingFunc: func(idField string, item map[string]interface{}) string {
+			return item[idField].(string)
+		},
+		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
+			return SdkResponseAutoMapping(resource, targetName, item, nil, nil, nil)
+		},
+		TargetName: targetName,
+	})
+	return err
 }

@@ -21,6 +21,12 @@ func dataSourceKsyunNats() *schema.Resource {
 				Set: schema.HashString,
 			},
 
+			"name_regex": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsValidRegExp,
+			},
+
 			"output_file": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -57,12 +63,6 @@ func dataSourceKsyunNats() *schema.Resource {
 						"id": {
 							Type:     schema.TypeString,
 							Computed: true,
-						},
-
-						"name_regex": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							ValidateFunc: validation.StringIsValidRegExp,
 						},
 
 						"vpc_id": {

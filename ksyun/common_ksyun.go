@@ -142,6 +142,18 @@ func SetResourceDataByResp(d *schema.ResourceData, item interface{}, keys map[st
 	return nil
 }
 
+func AddProjectInfo(d *schema.ResourceData, req *map[string]interface{}, client *KsyunClient) error {
+	if pj, ok := d.GetOk("project_id"); ok {
+		(*req)["ProjectId.1"] = fmt.Sprintf("%v", pj)
+	} else {
+		projectErr := GetProjectInfo(req, client)
+		if projectErr != nil {
+			return projectErr
+		}
+	}
+	return nil
+}
+
 func GetProjectInfo(input *map[string]interface{}, client *KsyunClient) error {
 	iamConn := client.iamconn
 	req := make(map[string]interface{})
@@ -234,6 +246,24 @@ func Downline2Hump(s string) string {
 	for _, v := range ss {
 		vv := strings.ToUpper(v[:1]) + v[1:]
 		s1 = append(s1, vv)
+	}
+	return strings.Join(s1, "")
+}
+
+func Downline2Filter(s string) string {
+	s = strings.TrimSpace(s)
+	if len(s) == 0 {
+		return s
+	}
+	var s1 []string
+	ss := strings.Split(s, "_")
+	for i, v := range ss {
+		if i < len(ss)-1 {
+			vv := v + "-"
+			s1 = append(s1, vv)
+		} else {
+			s1 = append(s1, v)
+		}
 	}
 	return strings.Join(s1, "")
 }

@@ -25,9 +25,11 @@ resource "ksyun_lb" "default" {
 The following arguments are supported:
 
 * `load_balancer_name` - (Optional) The name of the load balancer. 
-* `vpc_id` - (Required) The ID of the VPC linked to the Load Balancers.
-* `type` - (Optional) The type of load balancer.Valid Values:'public', 'internal'.
-* `subnet_id` - (Optional) The id of the subnet.only Internal type is Required.
+* `vpc_id` - (Required, ForceNew) The ID of the VPC linked to the Load Balancers.
+* `type` - (Optional, ForceNew) The type of load balancer.Valid Values:'public', 'internal'.
+* `subnet_id` - (Optional, ForceNew) The id of the subnet.only Internal type is Required.
+* `load_balancer_state` - (Optional) The Load Balancers state.Valid Values:'start', 'stop'.
+* `private_ip_address` - (Optional) The internal Load Balancers can set an private ip address in Reserve Subnet .
 
 
 ## Attributes Reference
@@ -35,7 +37,8 @@ The following arguments are supported:
 In addition to all arguments above, the following attributes are exported:
 
 * `create_time` - The time of creation for load balancer, formatted in RFC3339 time string.
-* `private_ip` - The IP address of intranet IP. It is `""` if `internal` is `false`.
+* `public_ip` - The IP address of Public IP. It is `""` if `internal` is `true`.
+* `private_ip_address` - The IP address of intranet IP. It is `""` if `internal` is `false`.
 
 ## Import
 

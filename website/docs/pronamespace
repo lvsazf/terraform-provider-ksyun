@@ -34,4 +34,10 @@ vpc:                       vpc,
 ssh_key:                   sks,
 route:                     vpc,
 nat:                       vpc,
-nat_associate:             vpc
+nat_associate:             vpc,
+scaling_configuration:     kec,
+scaling_group:             kec,
+scaling_instance:          kec,
+scaling_notification:      kec,
+scaling_policy:            kec,
+scaling_scheduled_task:    kec
