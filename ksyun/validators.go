@@ -215,6 +215,27 @@ func validateKecScalingGroupStatus(v interface{}, k string) (ws []string, errors
 	return
 }
 
+func validatePurchaseTime(req *map[string]interface{}, purchaseTimeField string, chargeTypeField string, chargeTypes []string) error {
+	if v, ok := (*req)[chargeTypeField]; ok {
+		flag := false
+		for _, t := range chargeTypes {
+			if t == v {
+				flag = true
+				if _, ok := (*req)[purchaseTimeField]; !ok {
+					return fmt.Errorf(
+						"%q must contain a value", purchaseTimeField)
+				}
+			}
+		}
+		if _, ok := (*req)[purchaseTimeField]; ok {
+			if !flag {
+				delete(*req, purchaseTimeField)
+			}
+		}
+	}
+	return nil
+}
+
 //校验Ks3 Bucket name
 /*
 func validateKs3BucketName(value string) error {

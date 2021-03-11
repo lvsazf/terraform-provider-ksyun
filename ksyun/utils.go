@@ -184,12 +184,58 @@ func getSchemeElem(resource *schema.Resource, keys []string) *schema.Resource {
 	return r
 }
 
-func SdkRequestAutoMapping(d *schema.ResourceData, resource *schema.Resource, isUpdate bool, only []string, extraMapping map[string]SdkRequestMapping) (map[string]interface{}, error) {
+// Auto Transform Terraform Resource to SDK Request Parameter
+// d : Transform schema.ResourceData Ptr
+// resource: Transform schema.Resource Ptr
+// onlyTransform : map[string]TransformType ,If set this field,Transform will with this array instead of Transform schema.Resource
+// extraMapping : map[string]SdkRequestMapping , if set this field, the key in map will instead of Transform schema.Resource key or only key
+func SdkRequestAutoMappingNew(d *schema.ResourceData, resource *schema.Resource, isUpdate bool, onlyTransform map[string]SdkReqTransform, extraMapping map[string]SdkRequestMapping) (map[string]interface{}, error) {
 	var req map[string]interface{}
 	var err error
 	req = make(map[string]interface{})
-	if only != nil {
-		for _, k := range only {
+	count := 1
+	if onlyTransform != nil {
+		for k, v := range onlyTransform {
+			if isUpdate {
+				err = requestUpdateMappingNew(d, k, v, count, extraMapping, &req)
+			} else {
+				err = requestCreateMappingNew(d, k, v, count, extraMapping, &req)
+			}
+			count = count + 1
+		}
+	} else {
+		for k, _ := range resource.Schema {
+			if isUpdate {
+				err = requestUpdateMappingNew(d, k, SdkReqTransform{}, count, extraMapping, &req)
+			} else {
+				err = requestCreateMappingNew(d, k, SdkReqTransform{}, count, extraMapping, &req)
+			}
+			count = count + 1
+		}
+	}
+
+	return req, err
+}
+
+// Auto Transform Terraform Resource to SDK Request Parameter
+// d : Transform schema.ResourceData Ptr
+// resource: Transform schema.Resource Ptr
+// onlyTransform : []string ,If set this field,Transform will with this array instead of Transform schema.Resource
+// extraMapping : map[string]SdkRequestMapping , if set this field, the key in map will instead of Transform schema.Resource key or only key
+func SdkRequestAutoMapping(d *schema.ResourceData, resource *schema.Resource, isUpdate bool, onlyTransform []string, extraMapping map[string]SdkRequestMapping) (map[string]interface{}, error) {
+	var req map[string]interface{}
+	var err error
+	req = make(map[string]interface{})
+	if onlyTransform != nil {
+		for _, k := range onlyTransform {
+			if isUpdate {
+				err = requestUpdateMapping(d, k, extraMapping, &req)
+			} else {
+				err = requestCreateMapping(d, k, extraMapping, &req)
+			}
+		}
+	} else {
+		for k, _ := range resource.Schema {
 			if isUpdate {
 				err = requestUpdateMapping(d, k, extraMapping, &req)
 			} else {
@@ -197,15 +243,71 @@ func SdkRequestAutoMapping(d *schema.ResourceData, resource *schema.Resource, is
 			}
 		}
 	}
-	for k, _ := range resource.Schema {
-		if isUpdate {
-			err = requestUpdateMapping(d, k, extraMapping, &req)
-		} else {
-			err = requestCreateMapping(d, k, extraMapping, &req)
-		}
-	}
 
 	return req, err
+}
+
+func requestCreateMappingNew(d *schema.ResourceData, k string, t SdkReqTransform, index int, extraMapping map[string]SdkRequestMapping, req *map[string]interface{}) error {
+	var err error
+	if v, ok := d.GetOk(k); ok {
+		if _, ok := extraMapping[k]; !ok {
+			switch t.Type {
+			case TransformDefault:
+				if strings.TrimSpace(t.mapping) == "" {
+					(*req)[Downline2Hump(k)] = v
+				} else {
+					(*req)[t.mapping] = v
+				}
+
+			case TransformWithN:
+				if x, ok := v.(*schema.Set); ok {
+					for i, value := range (*x).List() {
+						if y, ok := value.(string); ok {
+							if strings.TrimSpace(t.mapping) == "" {
+								(*req)[Downline2Hump(k)+"."+strconv.Itoa(i+1)] = y
+							} else {
+								(*req)[t.mapping+"."+strconv.Itoa(i+1)] = v
+							}
+
+						}
+					}
+				}
+			case TransformWithFilter:
+				if x, ok := v.(*schema.Set); ok {
+					for i, value := range (*x).List() {
+						if y, ok := value.(string); ok {
+							if i == 0 {
+								if strings.TrimSpace(t.mapping) == "" {
+									(*req)["Filter."+strconv.Itoa(index)+".Name"] = Downline2Filter(k)
+								} else {
+									(*req)["Filter."+strconv.Itoa(index)+".Name"] = t.mapping
+								}
+
+							}
+							(*req)["Filter."+strconv.Itoa(index)+".Value."+strconv.Itoa(i+1)] = y
+						}
+					}
+				}
+			}
+
+		} else {
+			m := extraMapping[k]
+			if m.FieldReqFunc == nil {
+				(*req)[m.Field] = v
+			} else {
+				err = m.FieldReqFunc(v, m.Field, req)
+			}
+		}
+	}
+	return err
+}
+
+func requestUpdateMappingNew(d *schema.ResourceData, k string, t SdkReqTransform, index int, extraMapping map[string]SdkRequestMapping, req *map[string]interface{}) error {
+	var err error
+	if d.HasChange(k) && !d.IsNewResource() {
+		err = requestCreateMappingNew(d, k, t, index, extraMapping, req)
+	}
+	return err
 }
 
 func requestCreateMapping(d *schema.ResourceData, k string, extraMapping map[string]SdkRequestMapping, req *map[string]interface{}) error {

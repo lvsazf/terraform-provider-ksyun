@@ -1,5 +1,10 @@
 package ksyun
 
+type SdkReqTransform struct {
+	Type    TransformType
+	mapping string
+}
+
 type SdkResponseData struct {
 	Next map[string]SdkResponseData
 }
