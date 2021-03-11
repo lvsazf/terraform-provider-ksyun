@@ -30,10 +30,10 @@ resource "ksyun_eip" "default1" {
 
 The following arguments are supported:
 
-* `line_id` - (Required) The id of the line.
+* `line_id` - (Required, ForceNew) The id of the line.
 * `band_width` - (Required) The band width of the public address.
-* `charge_type` - (Required) The charge type of the Elastic IP address.Valid Values:'PrePaidByMonth', 'PostPaidByPeak', 'PostPaidByDay', 'PostPaidByTransfer', 'PostPaidByHour', 'HourlyInstantSettlement'.
-* `purchase_time` - (Required) Purchase time.
+* `charge_type` - (Required) The charge type of the Elastic IP address.Valid Values:'Monthly(PrePaidByMonth)', 'Peak(PostPaidByPeak)', 'Daily(PostPaidByDay)', 'TrafficMonthly(PostPaidByTransfer)', 'HourlySettlement(PostPaidByHour)', 'HourlyInstantSettlement' ,'DailyPaidByTransfer'.
+* `purchase_time` - (Optional) Purchase time. If charge_type is Monthly or PrePaidByMonth ,this is Required.
 * `project_id` - (Optional) The id of the project.
 
  

@@ -1,0 +1,169 @@
+package ksyun
+
+import (
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/terraform-providers/terraform-provider-ksyun/logger"
+	"strconv"
+	"strings"
+	"time"
+)
+
+func resourceKsyunScalingNotification() *schema.Resource {
+	return &schema.Resource{
+		Create: resourceKsyunScalingNotificationCreate,
+		Read:   resourceKsyunScalingNotificationRead,
+		Delete: resourceKsyunScalingNotificationDelete,
+		Update: resourceKsyunScalingNotificationUpdate,
+		Schema: map[string]*schema.Schema{
+
+			"scaling_group_id": {
+				Type:     schema.TypeString,
+				ForceNew: true,
+				Required: true,
+			},
+
+			"scaling_notification_types": {
+				Type:     schema.TypeSet,
+				Required: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Set: schema.HashString,
+			},
+
+			"scaling_notification_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+		},
+	}
+}
+
+func resourceKsyunScalingNotificationCreate(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*KsyunClient)
+	conn := client.kecconn
+	r := resourceKsyunScalingNotification()
+
+	var resp *map[string]interface{}
+	var err error
+
+	req, err := SdkRequestAutoMapping(d, r, false, nil, resourceKsyunScalingNotificationExtra())
+	if err != nil {
+		return fmt.Errorf("error on creating ScalingNotification, %s", err)
+	}
+	//query first
+	resp, err = conn.DescribeScalingNotification(&req)
+	if err != nil {
+		return fmt.Errorf("error on reading ScalingNotification %q, %s", d.Id(), err)
+	}
+	if resp != nil {
+		items, ok := (*resp)["ScalingNotificationSet"].([]interface{})
+		if ok && len(items) > 0 {
+			d.SetId((items[0]).(map[string]interface{})["ScalingNotificationId"].(string) + ":" + req["ScalingGroupId"].(string))
+			//process update
+			return resourceKsyunScalingNotificationUpdate(d, meta)
+		}
+
+	}
+
+	action := "CreateScalingNotification"
+	logger.Debug(logger.ReqFormat, action, req)
+	resp, err = conn.CreateScalingNotification(&req)
+	if err != nil {
+		return fmt.Errorf("error on creating ScalingNotification, %s", err)
+	}
+	if resp != nil {
+		d.SetId((*resp)["ScalingNotificationId"].(string) + ":" + req["ScalingGroupId"].(string))
+	}
+	return resourceKsyunScalingNotificationRead(d, meta)
+}
+
+func resourceKsyunScalingNotificationUpdate(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*KsyunClient)
+	conn := client.kecconn
+	r := resourceKsyunScalingNotification()
+
+	var err error
+
+	req, err := SdkRequestAutoMapping(d, r, true, nil, resourceKsyunScalingNotificationExtra())
+	if err != nil {
+		return fmt.Errorf("error on modifying ScalingNotification, %s", err)
+	}
+	req["ScalingGroupId"] = strings.Split(d.Id(), ":")[1]
+	req["ScalingNotificationId"] = strings.Split(d.Id(), ":")[0]
+	action := "ModifyScalingNotification"
+	logger.Debug(logger.ReqFormat, action, req)
+	_, err = conn.ModifyScalingNotification(&req)
+	if err != nil {
+		return fmt.Errorf("error on modifying ScalingNotification, %s", err)
+	}
+	return resourceKsyunScalingNotificationRead(d, meta)
+}
+
+func resourceKsyunScalingNotificationRead(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*KsyunClient)
+	conn := client.kecconn
+
+	req := make(map[string]interface{})
+	req["ScalingGroupId"] = strings.Split(d.Id(), ":")[1]
+	req["ScalingNotificationId.1"] = strings.Split(d.Id(), ":")[0]
+	action := "DescribeScalingNotification"
+	logger.Debug(logger.ReqFormat, action, req)
+	resp, err := conn.DescribeScalingNotification(&req)
+	if err != nil {
+		return fmt.Errorf("error on reading ScalingNotification %q, %s", d.Id(), err)
+	}
+	if resp != nil {
+		items, ok := (*resp)["ScalingNotificationSet"].([]interface{})
+		if !ok || len(items) == 0 {
+			d.SetId("")
+			return nil
+		}
+		SdkResponseAutoResourceData(d, resourceKsyunScalingNotification(), items[0], nil)
+	}
+	return nil
+}
+
+func resourceKsyunScalingNotificationDelete(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*KsyunClient)
+	conn := client.kecconn
+	req := make(map[string]interface{})
+	req["ScalingGroupId"] = strings.Split(d.Id(), ":")[1]
+	req["ScalingNotificationId"] = strings.Split(d.Id(), ":")[0]
+	action := "DeleteScalingNotification"
+
+	return resource.Retry(25*time.Minute, func() *resource.RetryError {
+		logger.Debug(logger.ReqFormat, action, req)
+		resp, err1 := conn.ModifyScalingNotification(&req)
+		logger.Debug(logger.AllFormat, action, req, resp, err1)
+		if err1 == nil {
+			return nil
+		} else if notFoundError(err1) {
+			return nil
+		} else {
+			return resource.RetryableError(fmt.Errorf("error on  deleting ScalingNotification %q, %s", d.Id(), err1))
+		}
+	})
+
+}
+
+func resourceKsyunScalingNotificationExtra() map[string]SdkRequestMapping {
+	var extra map[string]SdkRequestMapping
+	extra = make(map[string]SdkRequestMapping)
+	extra["scaling_notification_types"] = SdkRequestMapping{
+		Field: "NotificationType.",
+		FieldReqFunc: func(item interface{}, s string, m *map[string]interface{}) error {
+			if x, ok := item.(*schema.Set); ok {
+				for i, value := range (*x).List() {
+					if d, ok := value.(string); ok {
+						(*m)[s+strconv.Itoa(i+1)] = d
+					}
+				}
+			}
+			return nil
+		},
+	}
+	return extra
+}

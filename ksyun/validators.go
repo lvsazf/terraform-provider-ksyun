@@ -53,6 +53,23 @@ func validateSubnetType(v interface{}, k string) (ws []string, errors []error) {
 	return
 }
 
+func validateLbState(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	if value != "start" && value != "stop" {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid loadbalancer state, got error parsing: %s", k, value))
+	}
+	return
+}
+func validateLbType(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	if value != "public" && value != "internal" {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid loadbalancer type, got error parsing: %s", k, value))
+	}
+	return
+}
+
 func validateRouteType(v interface{}, k string) (ws []string, errors []error) {
 	value := v.(string)
 	if value != "InternetGateway" && value != "Tunnel" && value != "Host" && value != "Peering" && value != "DirectConnect" && value != "Vpn" {
@@ -106,6 +123,117 @@ func validateNatChargeType(v interface{}, k string) (ws []string, errors []error
 			"%q must contain a valid nat charge type and control by price system, got error parsing: %s", k, value))
 	}
 	return
+}
+
+func validateKecSystemDiskType(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	if value != "Local_SSD" && value != "SSD3.0" && value != "EHDD" {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid System Disk Type and control by price system, got error parsing: %s", k, value))
+	}
+	return
+}
+
+func validateKecSystemDiskSize(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(int)
+	if value < 0 || value > 500 {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid System Disk Size and control by price system, got error parsing: %d", k, value))
+	}
+	return
+}
+
+func validateKecDataDiskType(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	if value != "SSD3.0" && value != "EHDD" {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid Data Disk Type and control by price system, got error parsing: %s", k, value))
+	}
+	return
+}
+
+func validateKecDataDiskSize(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(int)
+	if value < 10 || value > 16000 {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid Data Disk Size and control by price system, got error parsing: %d", k, value))
+	}
+	return
+}
+
+func validateKecInstanceAgent(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(int)
+	if value != 0 && value != 1 {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid Instance Agent and control by price system, got error parsing: %d", k, value))
+	}
+	return
+}
+
+func validateKecScalingGroupSize(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(int)
+	if value < 0 || value > 10 {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid ScalingGroup min or max size, got error parsing: %d", k, value))
+	}
+	return
+}
+
+func validateKecScalingGroupDesiredCapacity(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(int)
+	if value < 0 || value > 10 {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid ScalingGroupDesiredCapacity, got error parsing: %d", k, value))
+	}
+	return
+}
+
+func validateKecScalingGroupRemovePolicy(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	if value != "RemoveOldestInstance" && value != "RemoveNewestInstance" {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid ScalingGroupRemovePolicy, got error parsing: %s", k, value))
+	}
+	return
+}
+
+func validateKecScalingGroupSubnetStrategy(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	if value != "balanced-distribution" && value != "choice-first" {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid ScalingGroupSubnetStrategy, got error parsing: %s", k, value))
+	}
+	return
+}
+
+func validateKecScalingGroupStatus(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	if value != "UnActive" && value != "Active" {
+		errors = append(errors, fmt.Errorf(
+			"%q must contain a valid ScalingGroupStatus, got error parsing: %s", k, value))
+	}
+	return
+}
+
+func validatePurchaseTime(req *map[string]interface{}, purchaseTimeField string, chargeTypeField string, chargeTypes []string) error {
+	if v, ok := (*req)[chargeTypeField]; ok {
+		flag := false
+		for _, t := range chargeTypes {
+			if t == v {
+				flag = true
+				if _, ok := (*req)[purchaseTimeField]; !ok {
+					return fmt.Errorf(
+						"%q must contain a value", purchaseTimeField)
+				}
+			}
+		}
+		if _, ok := (*req)[purchaseTimeField]; ok {
+			if !flag {
+				delete(*req, purchaseTimeField)
+			}
+		}
+	}
+	return nil
 }
 
 //校验Ks3 Bucket name

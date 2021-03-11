@@ -10,8 +10,6 @@ data "ksyun_lines" "default" {
 # Create an eip
 resource "ksyun_eip" "default1" {
   line_id ="${data.ksyun_lines.default.lines.0.line_id}"
-  band_width =1
+  band_width =2
   charge_type = "PostPaidByDay"
-  purchase_time =1
-  project_id=0
 }

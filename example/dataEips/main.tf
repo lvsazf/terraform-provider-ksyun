@@ -9,7 +9,8 @@ data "ksyun_eips" "default" {
 
   ids=[]
   project_id=["0"]
-  instance_type=["Ipfwd"]
+  instance_type=["Slb"]
+  ip_version = "all"
   network_interface_id=[]
   internet_gateway_id=[]
   band_width_share_id=[]
