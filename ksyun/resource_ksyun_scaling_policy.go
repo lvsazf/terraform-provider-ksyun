@@ -238,7 +238,7 @@ func resourceKsyunScalingPolicyDelete(d *schema.ResourceData, meta interface{}) 
 func resourceKsyunScalingPolicyExtra(d *schema.ResourceData) map[string]SdkRequestMapping {
 	var extra map[string]SdkRequestMapping
 	extra = make(map[string]SdkRequestMapping)
-	fieldReqFunc := func(item interface{}, s string, m *map[string]interface{}) error {
+	fieldReqFunc := func(item interface{}, s string, source string, m *map[string]interface{}) error {
 		if _, ok := (*m)[s]; !ok {
 			jsonMap := make(map[string]interface{})
 			jsonMap["comparisonOperator"] = d.Get("comparison_operator")

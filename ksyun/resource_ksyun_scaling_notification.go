@@ -154,7 +154,7 @@ func resourceKsyunScalingNotificationExtra() map[string]SdkRequestMapping {
 	extra = make(map[string]SdkRequestMapping)
 	extra["scaling_notification_types"] = SdkRequestMapping{
 		Field: "NotificationType.",
-		FieldReqFunc: func(item interface{}, s string, m *map[string]interface{}) error {
+		FieldReqFunc: func(item interface{}, s string, source string, m *map[string]interface{}) error {
 			if x, ok := item.(*schema.Set); ok {
 				for i, value := range (*x).List() {
 					if d, ok := value.(string); ok {

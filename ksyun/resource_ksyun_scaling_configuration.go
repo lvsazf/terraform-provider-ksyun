@@ -183,7 +183,7 @@ func resourceKsyunScalingConfigurationExtra() map[string]SdkRequestMapping {
 	extra = make(map[string]SdkRequestMapping)
 	extra["data_disks"] = SdkRequestMapping{
 		Field: "DataDisk.",
-		FieldReqFunc: func(item interface{}, s string, m *map[string]interface{}) error {
+		FieldReqFunc: func(item interface{}, s string, source string, m *map[string]interface{}) error {
 			if arr, ok := item.([]interface{}); ok {
 				for i, value := range arr {
 					if d, ok := value.(map[string]interface{}); ok {
@@ -209,7 +209,7 @@ func resourceKsyunScalingConfigurationExtra() map[string]SdkRequestMapping {
 	}
 	extra["key_id"] = SdkRequestMapping{
 		Field: "KeyId.",
-		FieldReqFunc: func(item interface{}, s string, m *map[string]interface{}) error {
+		FieldReqFunc: func(item interface{}, s string, source string, m *map[string]interface{}) error {
 			if x, ok := item.(*schema.Set); ok {
 				for i, value := range (*x).List() {
 					if d, ok := value.(string); ok {

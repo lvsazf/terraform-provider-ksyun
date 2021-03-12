@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-ksyun/logger"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -62,9 +63,9 @@ func resourceKsyunInstance() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
-			//去除在主机创建云盘的功能，不然主机和ebs两边都能进行操作，配置数据会不一致
 			"data_disks": {
 				Type:     schema.TypeList,
+				Optional: true,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -74,33 +75,27 @@ func resourceKsyunInstance() *schema.Resource {
 						},
 						"disk_type": {
 							Type:     schema.TypeString,
+							Optional: true,
 							Computed: true,
 						},
 						"disk_size": {
 							Type:     schema.TypeInt,
+							Optional: true,
 							Computed: true,
 						},
 						"delete_with_instance": {
 							Type:     schema.TypeBool,
+							Optional: true,
 							Computed: true,
 						},
 					},
 				},
 			},
-			/*
-			   "max_count": {
-			      Type:     schema.TypeInt,
-			      Required: true,
-			   },
-			   "min_count": {
-			      Type:     schema.TypeInt,
-			      Required: true,
-			   },
-			*/
 			"instance_password": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:      schema.TypeString,
+				Optional:  true,
+				Computed:  true,
+				Sensitive: true,
 			},
 			"keep_image_login": {
 				Type:     schema.TypeBool,
@@ -196,16 +191,6 @@ func resourceKsyunInstance() *schema.Resource {
 							Type:     schema.TypeInt,
 							Computed: true,
 						},
-						/*
-						   "root_disk_gb": {
-						      Type:     schema.TypeInt,
-						      Computed: true,
-						   },
-						   "data_disk_type": {
-						      Type:     schema.TypeString,
-						      Computed: true,
-						   },
-						*/
 					},
 				},
 			},
@@ -324,98 +309,59 @@ func resourceKsyunInstance() *schema.Resource {
 	}
 }
 
+func resourceKsyunInstanceExtra(r map[string]SdkReqTransform) map[string]SdkRequestMapping {
+	var extra map[string]SdkRequestMapping
+	extra = SdkRequestAutoExtra(r)
+	extra["security_group_id"] = SdkRequestMapping{
+		Field: "SecurityGroupId",
+		FieldReqFunc: func(item interface{}, field string, source string, m *map[string]interface{}) error {
+			if a, ok := item.(*schema.Set); ok {
+				for _, sg := range (*a).List() {
+					(*m)[field] = sg
+					break
+				}
+			}
+			return nil
+		},
+	}
+	return extra
+}
+
 func resourceKsyunInstanceCreate(d *schema.ResourceData, meta interface{}) error {
-	conn := meta.(*KsyunClient).kecconn
+	client := meta.(*KsyunClient)
+	conn := client.kecconn
+	r := resourceKsyunInstance()
+
 	var resp *map[string]interface{}
-	createReq := make(map[string]interface{})
 	var err error
-	creates := []string{
-		"image_id",
-		"instance_type",
-		// "system_disk",
-		//"data_disk_gb",
-		// "data_disk",
-		//"max_count",=1
-		//"min_count",=1
-		"subnet_id",
-		//"instance_password",于keyid冲突
-		"keep_image_login",
-		"charge_type",
-		"purchase_time",
-		//"security_group_id",
-		"private_ip_address",
-		"instance_name",
-		"instance_name_suffix",
-		"sriov_net_support",
-		"project_id",
-		"data_guard_id",
-		"address_band_width",
-		"line_id",
-		"address_charge_type",
-		"address_purchase_time",
-		"address_project_id",
-		"host_name",
-		"user_data",
+
+	var only map[string]SdkReqTransform
+
+	only = map[string]SdkReqTransform{
+		"key_id":      {Type: TransformWithN},
+		"system_disk": {Type: TransformListUnique},
+		"data_disks": {mappings: map[string]string{
+			"data_disks": "DataDisk",
+			"disk_size":  "Size",
+			"disk_type":  "Type",
+		}, Type: TransformListN},
 	}
-	for _, v := range creates {
-		if v1, ok := d.GetOk(v); ok {
-			vv := Downline2Hump(v)
-			createReq[vv] = fmt.Sprintf("%v", v1)
-		}
+
+	req, err := SdkRequestAutoMapping(d, r, false, nil, resourceKsyunInstanceExtra(only))
+	if err != nil {
+		return fmt.Errorf("error on creating Instance, %s", err)
 	}
-	keyIds, ok := d.GetOk("key_id")
-	var keyset bool
-	if ok {
-		keys := SchemaSetToStringSlice(keyIds)
-		for k, v := range keys {
-			key := fmt.Sprintf("KeyId.%d", k+1)
-			createReq[key] = fmt.Sprintf("%v", v)
-		}
-		if len(keys) > 0 {
-			keyset = true
-		}
-	}
-	keepImageLogin := d.Get("keep_image_login")
-	var keepImage bool
-	if ok {
-		keepImage = keepImageLogin.(bool)
-	}
-	if (!keepImage) && (!keyset) {
-		createReq["InstancePassword"] = d.Get("instance_password")
-	} else {
-		if err := d.Set("instance_password", ""); err != nil {
-			return err
-		}
-	}
-	securityGroupIds, ok := d.GetOk("security_group_id")
-	if !ok {
-		return fmt.Errorf("no SecurityGroupId get")
-	}
-	securityGroups := SchemaSetToStringSlice(securityGroupIds)
-	if len(securityGroups) == 0 {
-		return fmt.Errorf("no SecurityGroupId get")
-	}
-	createReq["SecurityGroupId"] = securityGroups[0]
-	createReq["MaxCount"] = "1"
-	createReq["MinCount"] = "1"
-	createStructs := []string{
-		"system_disk",
-	}
-	for _, v := range createStructs {
-		if v1, ok := d.GetOk(v); ok {
-			FlatternStructPrefix(v1, &createReq, "SystemDisk")
-		}
-	}
-	/*	if v1, ok := d.GetOk("data_disk"); ok {
-		FlatternStructSlicePrefix(v1, &createReq, "DataDisk")
-	}*/
+
+	req["MaxCount"] = "1"
+	req["MinCount"] = "1"
+
 	action := "RunInstances"
-	logger.Debug(logger.ReqFormat, action, createReq)
-	resp, err = conn.RunInstances(&createReq)
+	logger.Debug(logger.ReqFormat, action, req)
+	resp, err = conn.RunInstances(&req)
 	if err != nil {
 		return fmt.Errorf("error on creating Instance: %s", err)
 	}
-	logger.Debug(logger.RespFormat, action, createReq, *resp)
+	logger.Debug(logger.RespFormat, action, req, *resp)
 	if resp != nil {
 		instances := (*resp)["InstancesSet"].([]interface{})
 		if len(instances) == 0 {
@@ -438,13 +384,63 @@ func resourceKsyunInstanceCreate(d *schema.ResourceData, meta interface{}) error
 		Delay:      3 * time.Second,
 		MinTimeout: 2 * time.Second,
 	}
+
 	_, err = stateConf.WaitForState()
+
+	//set sg
+	err = addSecurityGroupsAfterCreate(d, meta)
+
 	if err := resourceKsyunInstanceRead(d, meta); err != nil {
 		return err
 	}
 	if err != nil {
 		return fmt.Errorf("error on waiting for instance %q complete creating, %s", d.Id(), err)
 	}
+	return nil
+}
+
+func addSecurityGroupsAfterCreate(d *schema.ResourceData, meta interface{}) error {
+	if sgs, ok := d.GetOk("security_group_id"); ok {
+		if p, ok := sgs.(*schema.Set); ok {
+			if len((*p).List()) > 1 {
+				client := meta.(*KsyunClient)
+				conn := client.kecconn
+				readReq := make(map[string]interface{})
+				readReq["InstanceId.1"] = d.Id()
+				if pd, ok := d.GetOk("project_id"); ok {
+					readReq["ProjectId.1"] = fmt.Sprintf("%v", pd)
+				}
+				action := "DescribeInstances"
+				logger.Debug(logger.ReqFormat, action, readReq)
+				resp, err := conn.DescribeInstances(&readReq)
+				if err != nil {
+					return fmt.Errorf("error on reading Instance %q, %s", d.Id(), err)
+				}
+				networkInterfaceId, err := getSdkValue("InstancesSet.0.NetworkInterfaceSet.0.NetworkInterfaceId", *resp)
+				if err != nil {
+					return fmt.Errorf("error on reading Instance %q, %s", d.Id(), err)
+				}
+				subnetId, err := getSdkValue("InstancesSet.0.NetworkInterfaceSet.0.SubnetId", *resp)
+				if err != nil {
+					return fmt.Errorf("error on reading Instance %q, %s", d.Id(), err)
+				}
+				updateNetworkReq := make(map[string]interface{})
+				updateNetworkReq["InstanceId"] = d.Id()
+				updateNetworkReq["NetworkInterfaceId"] = networkInterfaceId
+				updateNetworkReq["SubnetId"] = subnetId
+				for i, sg := range (*p).List() {
+					updateNetworkReq["SecurityGroupId."+strconv.Itoa(i+1)] = sg
+				}
+				action = "ModifyNetworkInterfaceAttribute"
+				logger.Debug(logger.ReqFormat, action, updateNetworkReq)
+				_, err = conn.ModifyNetworkInterfaceAttribute(&updateNetworkReq)
+				if err != nil {
+					return fmt.Errorf("error on reading Instance %q, %s", d.Id(), err)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 

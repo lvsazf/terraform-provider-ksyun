@@ -193,7 +193,7 @@ func dataSourceKsyunScalingScheduledTasksSave(d *schema.ResourceData, result []m
 			return item[idField].(string) + ":" + item["ScalingGroupId"].(string)
 		},
 		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
-			return SdkResponseAutoMapping(resource, targetName, item, nil, nil, nil)
+			return SdkResponseAutoMapping(resource, targetName, item, nil, nil)
 		},
 		TargetName: targetName,
 	})

@@ -197,11 +197,11 @@ func dataSourceKsyunScalingPoliciesSave(d *schema.ResourceData, result []map[str
 			if item["Metric"] != nil {
 				compute, _ = SdkMapMapping(item["Metric"].(map[string]interface{}), SdkSliceData{
 					SliceMappingFunc: func(m map[string]interface{}) map[string]interface{} {
-						return SdkResponseAutoMapping(resource, targetName, m, nil, nil, nil)
+						return SdkResponseAutoMapping(resource, targetName, m, nil, nil)
 					},
 				})
 			}
-			return SdkResponseAutoMapping(resource, targetName, item, compute, nil, nil)
+			return SdkResponseAutoMapping(resource, targetName, item, compute, nil)
 		},
 		TargetName: targetName,
 	})

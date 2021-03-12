@@ -288,14 +288,7 @@ func dataSourceKsyunScalingConfigurationsSave(d *schema.ResourceData, result []m
 			return item["ScalingConfigurationId"].(string)
 		},
 		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
-			//_, aaa, _ := SdkSliceMapping(nil, item["ScalingGroupIdSet"].([]interface{}), SdkSliceData{
-			//	SliceMappingFunc: func(group map[string]interface{}) map[string]interface{} {
-			//		return SdkResponseAutoMapping(resource, targetName+".scaling_group_id_set", group, nil, nil)
-			//	},
-			//})
-			//extra := make(map[string][]map[string]interface{})
-			//extra["scaling_group_id_set"] = aaa
-			return SdkResponseAutoMapping(resource, targetName, item, nil, nil, scalingConfigurationSpecialMapping())
+			return SdkResponseAutoMapping(resource, targetName, item, nil, scalingConfigurationSpecialMapping())
 		},
 		TargetName: targetName,
 	})

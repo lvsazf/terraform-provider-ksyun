@@ -184,6 +184,107 @@ func getSchemeElem(resource *schema.Resource, keys []string) *schema.Resource {
 	return r
 }
 
+func transformListFilter(v interface{}, k string, t SdkReqTransform, index int, req *map[string]interface{}) int {
+	if list, ok := v.([]interface{}); ok {
+		for _, v1 := range list {
+			if m1, ok := v1.(map[string]interface{}); ok {
+				for k2, v2 := range m1 {
+					if v3, ok := v2.(*schema.Set); ok {
+						for i, v4 := range (*v3).List() {
+							if i == 0 {
+								k = k + "." + k2
+								if target, ok := t.mappings[k]; ok {
+									(*req)["Filter."+strconv.Itoa(index)+".Name"] = target
+								} else {
+									(*req)["Filter."+strconv.Itoa(index)+".Name"] = Downline2Filter(k)
+								}
+
+							}
+							(*req)["Filter."+strconv.Itoa(index)+".Value."+strconv.Itoa(i+1)] = v4
+						}
+						index = index + 1
+					} else {
+						index = transformListFilter(v2, k, t, index, req)
+					}
+				}
+			}
+		}
+	}
+	return index
+}
+
+func transformListN(v interface{}, k string, t SdkReqTransform, req *map[string]interface{}) {
+	if list, ok := v.([]interface{}); ok {
+		for index, v1 := range list {
+			if m1, ok := v1.(map[string]interface{}); ok {
+				for k2, v2 := range m1 {
+					k3 := getFinalKey(t, k) + "." + strconv.Itoa(index+1) + "." + getFinalKey(t, k2)
+					(*req)[k3] = v2
+				}
+			}
+		}
+	}
+}
+
+func getFinalKey(t SdkReqTransform, k string) string {
+	if target, ok := t.mappings[k]; ok {
+		return target
+	} else {
+		return Downline2Hump(k)
+	}
+}
+
+func transformListUnique(v interface{}, k string, t SdkReqTransform, req *map[string]interface{}) {
+	if list, ok := v.([]interface{}); ok {
+		for _, v1 := range list {
+			if m1, ok := v1.(map[string]interface{}); ok {
+				for k2, v2 := range m1 {
+					k3 := k + "." + k2
+					if target, ok := t.mappings[k3]; ok {
+						(*req)[target] = v2
+					} else {
+						(*req)[Downline2Hump(k3)] = v2
+					}
+				}
+				break
+			}
+		}
+	}
+}
+
+func transformWithN(v interface{}, k string, t SdkReqTransform, req *map[string]interface{}) {
+	if x, ok := v.(*schema.Set); ok {
+		for i, value := range (*x).List() {
+			if strings.TrimSpace(t.mapping) == "" {
+				(*req)[Downline2Hump(k)+"."+strconv.Itoa(i+1)] = value
+			} else {
+				(*req)[t.mapping+"."+strconv.Itoa(i+1)] = value
+			}
+		}
+	}
+}
+
+func SdkRequestAutoExtra(r map[string]SdkReqTransform) map[string]SdkRequestMapping {
+	var extra map[string]SdkRequestMapping
+	extra = make(map[string]SdkRequestMapping)
+	for k, _ := range r {
+		extra[k] = SdkRequestMapping{
+			FieldReqFunc: func(item interface{}, field string, source string, m *map[string]interface{}) error {
+				switch r[source].Type {
+				case TransformListUnique:
+					transformListUnique(item, source, r[source], m)
+				case TransformWithN:
+					transformWithN(item, source, r[source], m)
+				case TransformListN:
+					transformListN(item, source, r[source], m)
+				}
+				return nil
+			},
+		}
+	}
+	return extra
+}
+
 // Auto Transform Terraform Resource to SDK Request Parameter
 // d : Transform schema.ResourceData Ptr
 // resource: Transform schema.Resource Ptr
@@ -197,27 +298,25 @@ func SdkRequestAutoMapping(d *schema.ResourceData, resource *schema.Resource, is
 	if onlyTransform != nil {
 		for k, v := range onlyTransform {
 			if isUpdate {
-				err = requestUpdateMapping(d, k, v, count, extraMapping, &req)
+				count, err = requestUpdateMapping(d, k, v, count, extraMapping, &req)
 			} else {
-				err = requestCreateMapping(d, k, v, count, extraMapping, &req)
+				count, err = requestCreateMapping(d, k, v, count, extraMapping, &req)
 			}
-			count = count + 1
 		}
 	} else {
 		for k, _ := range resource.Schema {
 			if isUpdate {
-				err = requestUpdateMapping(d, k, SdkReqTransform{}, count, extraMapping, &req)
+				count, err = requestUpdateMapping(d, k, SdkReqTransform{}, count, extraMapping, &req)
 			} else {
-				err = requestCreateMapping(d, k, SdkReqTransform{}, count, extraMapping, &req)
+				count, err = requestCreateMapping(d, k, SdkReqTransform{}, count, extraMapping, &req)
 			}
-			count = count + 1
 		}
 	}
 
 	return req, err
 }
 
-func requestCreateMapping(d *schema.ResourceData, k string, t SdkReqTransform, index int, extraMapping map[string]SdkRequestMapping, req *map[string]interface{}) error {
+func requestCreateMapping(d *schema.ResourceData, k string, t SdkReqTransform, index int, extraMapping map[string]SdkRequestMapping, req *map[string]interface{}) (int, error) {
 	var err error
 	if v, ok := d.GetOk(k); ok {
 		if _, ok := extraMapping[k]; !ok {
@@ -230,34 +329,26 @@ func requestCreateMapping(d *schema.ResourceData, k string, t SdkReqTransform, i
 				}
 
 			case TransformWithN:
-				if x, ok := v.(*schema.Set); ok {
-					for i, value := range (*x).List() {
-						if y, ok := value.(string); ok {
-							if strings.TrimSpace(t.mapping) == "" {
-								(*req)[Downline2Hump(k)+"."+strconv.Itoa(i+1)] = y
-							} else {
-								(*req)[t.mapping+"."+strconv.Itoa(i+1)] = v
-							}
-
-						}
-					}
-				}
+				transformWithN(v, k, t, req)
 			case TransformWithFilter:
 				if x, ok := v.(*schema.Set); ok {
 					for i, value := range (*x).List() {
-						if y, ok := value.(string); ok {
-							if i == 0 {
-								if strings.TrimSpace(t.mapping) == "" {
-									(*req)["Filter."+strconv.Itoa(index)+".Name"] = Downline2Filter(k)
-								} else {
-									(*req)["Filter."+strconv.Itoa(index)+".Name"] = t.mapping
-								}
-
+						if i == 0 {
+							if strings.TrimSpace(t.mapping) == "" {
+								(*req)["Filter."+strconv.Itoa(index)+".Name"] = Downline2Filter(k)
+							} else {
+								(*req)["Filter."+strconv.Itoa(index)+".Name"] = t.mapping
 							}
-							(*req)["Filter."+strconv.Itoa(index)+".Value."+strconv.Itoa(i+1)] = y
+
 						}
+						(*req)["Filter."+strconv.Itoa(index)+".Value."+strconv.Itoa(i+1)] = value
 					}
+					index = index + 1
 				}
+			case TransformListFilter:
+				index = transformListFilter(v, k, t, index, req)
+			case TransformListUnique:
+				transformListUnique(v, k, t, req)
 			}
 
 		} else {
@@ -265,19 +356,19 @@ func requestCreateMapping(d *schema.ResourceData, k string, t SdkReqTransform, i
 			if m.FieldReqFunc == nil {
 				(*req)[m.Field] = v
 			} else {
-				err = m.FieldReqFunc(v, m.Field, req)
+				err = m.FieldReqFunc(v, m.Field, k, req)
 			}
 		}
 	}
-	return err
+	return index, err
 }
 
-func requestUpdateMapping(d *schema.ResourceData, k string, t SdkReqTransform, index int, extraMapping map[string]SdkRequestMapping, req *map[string]interface{}) error {
+func requestUpdateMapping(d *schema.ResourceData, k string, t SdkReqTransform, index int, extraMapping map[string]SdkRequestMapping, req *map[string]interface{}) (int, error) {
 	var err error
 	if d.HasChange(k) && !d.IsNewResource() {
-		err = requestCreateMapping(d, k, t, index, extraMapping, req)
+		index, err = requestCreateMapping(d, k, t, index, extraMapping, req)
 	}
-	return err
+	return index, err
 }
 
 func SdkResponseAutoResourceData(d *schema.ResourceData, resource *schema.Resource, item interface{}, extra map[string]SdkResponseMapping, start ...bool) interface{} {
@@ -344,10 +435,12 @@ func SdkResponseAutoResourceData(d *schema.ResourceData, resource *schema.Resour
 }
 
 func SdkResponseAutoMapping(resource *schema.Resource, collectField string, item map[string]interface{}, computeItem map[string]interface{},
-	extra map[string]interface{}, extraMapping map[string]SdkResponseMapping) map[string]interface{} {
+	extraMapping map[string]SdkResponseMapping) map[string]interface{} {
 	var result map[string]interface{}
 	result = make(map[string]interface{})
 	keys := strings.Split(collectField, ".")
+	var extra map[string]interface{}
+	extra = make(map[string]interface{})
 	if len(keys) == 0 {
 		return result
 	}
@@ -371,16 +464,37 @@ func SdkResponseAutoMapping(resource *schema.Resource, collectField string, item
 					needExtraMapping = true
 				}
 			}
-			if _, ok := elem.Schema[target]; !ok {
+			if targetValue, ok := elem.Schema[target]; ok {
+				if !needExtraMapping && (targetValue.Type == schema.TypeList || targetValue.Type == schema.TypeSet) {
+					if _, ok := extra[target]; !ok {
+						if l, ok := v.([]interface{}); ok {
+							_, result, _ := SdkSliceMapping(nil, l, SdkSliceData{
+								SliceMappingFunc: func(m1 map[string]interface{}) map[string]interface{} {
+									return SdkResponseAutoMapping(resource, collectField+"."+target, m1, nil, nil)
+								},
+							})
+							extra[target] = result
+						} else if m, ok := v.(map[string]interface{}); ok {
+							result, _ := SdkMapMapping(item["Monitoring"].(map[string]interface{}), SdkSliceData{
+								SliceMappingFunc: func(m1 map[string]interface{}) map[string]interface{} {
+									return SdkResponseAutoMapping(resource, collectField+"."+target, m, nil, nil)
+								},
+							})
+							extra[target] = []map[string]interface{}{
+								result,
+							}
+
+						}
+					}
+
+				}
+			} else {
 				continue
 			}
+
 			needDefaultMapping := false
-			if extra == nil {
+			if _, ok := extra[target]; !ok {
 				needDefaultMapping = true
-			} else {
-				if _, ok := extra[target]; !ok {
-					needDefaultMapping = true
-				}
 			}
 			if needDefaultMapping {
 				if needExtraMapping {
