@@ -351,7 +351,7 @@ func resourceKsyunKrdsSecurityGroupDelete(d *schema.ResourceData, meta interface
 		} else if inUseError(err) {
 			return resource.RetryableError(err)
 		} else {
-			return resource.NonRetryableError(fmt.Errorf("error on  deleting ScalingPolicy %q, %s", d.Id(), err))
+			return resource.NonRetryableError(fmt.Errorf("error on  deleting Krds SecurityGroup %q, %s", d.Id(), err))
 		}
 
 	})
