@@ -6,4 +6,7 @@ const (
 	TransformDefault TransformType = iota
 	TransformWithN
 	TransformWithFilter
+	TransformListFilter
+	TransformListUnique
+	TransformListN
 )

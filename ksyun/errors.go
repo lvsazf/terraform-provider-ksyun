@@ -66,6 +66,7 @@ func inUseError(err error) bool {
 	errMessage := strings.ToLower(err.Error())
 	if strings.Contains(errMessage, "inuse") ||
 		strings.Contains(errMessage, "in use") ||
+		strings.Contains(errMessage, "INVALID_ACTION") ||
 		strings.Contains(errMessage, "used") {
 		return true
 	}

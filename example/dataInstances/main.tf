@@ -18,7 +18,7 @@ data "ksyun_instances" "default" {
     name =  []
   }
   availability_zone {
-    name =  []
+    name =  ["cn-beijing-6c"]
   }
 }
 
