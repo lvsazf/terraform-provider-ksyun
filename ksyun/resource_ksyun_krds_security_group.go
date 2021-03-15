@@ -3,6 +3,7 @@ package ksyun
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-ksyun/logger"
 	"strconv"
@@ -337,12 +338,21 @@ func resourceKsyunKrdsSecurityGroupDelete(d *schema.ResourceData, meta interface
 	conn := meta.(*KsyunClient).krdsconn
 	req := map[string]interface{}{"SecurityGroupId": d.Id()}
 	action := "DeleteSecurityGroup"
-	logger.Debug(logger.ReqFormat, action, req)
-	resp, err := conn.DeleteSecurityGroup(&req)
-	logger.Debug(logger.AllFormat, action, req, *resp, err)
 
-	if err != nil {
-		return fmt.Errorf("error on reading instance security group id : %q, %s", d.Id(), err)
-	}
-	return nil
+	return resource.Retry(25*time.Minute, func() *resource.RetryError {
+		logger.Debug(logger.ReqFormat, action, req)
+		resp, err := conn.DeleteSecurityGroup(&req)
+		logger.Debug(logger.AllFormat, action, req, resp, err)
+
+		if err == nil {
+			return nil
+		} else if notFoundError(err) {
+			return nil
+		} else if inUseError(err) {
+			return resource.RetryableError(err)
+		} else {
+			return resource.NonRetryableError(fmt.Errorf("error on  deleting ScalingPolicy %q, %s", d.Id(), err))
+		}
+
+	})
 }
