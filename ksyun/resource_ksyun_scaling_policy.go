@@ -219,6 +219,7 @@ func resourceKsyunScalingPolicyDelete(d *schema.ResourceData, meta interface{}) 
 	req["ScalingGroupId"] = strings.Split(d.Id(), ":")[1]
 	req["ScalingPolicyId"] = strings.Split(d.Id(), ":")[0]
 	action := "DeleteScalingPolicy"
+	otherErrorRetry := 10
 
 	return resource.Retry(25*time.Minute, func() *resource.RetryError {
 		logger.Debug(logger.ReqFormat, action, req)
@@ -229,7 +230,7 @@ func resourceKsyunScalingPolicyDelete(d *schema.ResourceData, meta interface{}) 
 		} else if notFoundError(err1) {
 			return nil
 		} else {
-			return resource.RetryableError(fmt.Errorf("error on  deleting ScalingPolicy %q, %s", d.Id(), err1))
+			return OtherErrorProcess(&otherErrorRetry, fmt.Errorf("error on  deleting ScalingPolicy %q, %s", d.Id(), err1))
 		}
 	})
 
@@ -238,7 +239,7 @@ func resourceKsyunScalingPolicyDelete(d *schema.ResourceData, meta interface{}) 
 func resourceKsyunScalingPolicyExtra(d *schema.ResourceData) map[string]SdkRequestMapping {
 	var extra map[string]SdkRequestMapping
 	extra = make(map[string]SdkRequestMapping)
-	fieldReqFunc := func(item interface{}, s string, m *map[string]interface{}) error {
+	fieldReqFunc := func(item interface{}, s string, source string, m *map[string]interface{}) error {
 		if _, ok := (*m)[s]; !ok {
 			jsonMap := make(map[string]interface{})
 			jsonMap["comparisonOperator"] = d.Get("comparison_operator")

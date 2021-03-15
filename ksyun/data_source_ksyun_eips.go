@@ -234,7 +234,7 @@ func dataSourceKsyunEipsSave(d *schema.ResourceData, result []map[string]interfa
 			return item[idField].(string)
 		},
 		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
-			return SdkResponseAutoMapping(resource, targetName, item, nil, nil, nil)
+			return SdkResponseAutoMapping(resource, targetName, item, nil, nil)
 		},
 		TargetName: targetName,
 	})

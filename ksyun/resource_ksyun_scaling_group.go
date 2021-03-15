@@ -141,7 +141,7 @@ func resourceKsyunScalingGroupExtra() map[string]SdkRequestMapping {
 	extra = make(map[string]SdkRequestMapping)
 	extra["slb_config_set"] = SdkRequestMapping{
 		Field: "Slb.",
-		FieldReqFunc: func(item interface{}, s string, m *map[string]interface{}) error {
+		FieldReqFunc: func(item interface{}, s string, source string, m *map[string]interface{}) error {
 			if arr, ok := item.([]interface{}); ok {
 				for i, value := range arr {
 					if d, ok := value.(map[string]interface{}); ok {
@@ -171,7 +171,7 @@ func resourceKsyunScalingGroupExtra() map[string]SdkRequestMapping {
 	}
 	extra["subnet_id_set"] = SdkRequestMapping{
 		Field: "SubnetId.",
-		FieldReqFunc: func(item interface{}, s string, m *map[string]interface{}) error {
+		FieldReqFunc: func(item interface{}, s string, source string, m *map[string]interface{}) error {
 			if x, ok := item.(*schema.Set); ok {
 				for i, value := range (*x).List() {
 					if d, ok := value.(string); ok {
@@ -302,6 +302,7 @@ func resourceKsyunScalingGroupDelete(d *schema.ResourceData, meta interface{}) e
 	req := make(map[string]interface{})
 	req["ScalingGroupId.1"] = d.Id()
 	action := "DeleteScalingGroup"
+	otherErrorRetry := 10
 
 	return resource.Retry(25*time.Minute, func() *resource.RetryError {
 		logger.Debug(logger.ReqFormat, action, req)
@@ -312,7 +313,7 @@ func resourceKsyunScalingGroupDelete(d *schema.ResourceData, meta interface{}) e
 		} else if notFoundError(err1) {
 			return nil
 		} else {
-			return resource.RetryableError(fmt.Errorf("error on  deleting ScalingGroup %q, %s", d.Id(), err1))
+			return OtherErrorProcess(&otherErrorRetry, fmt.Errorf("error on  deleting ScalingGroup %q, %s", d.Id(), err1))
 		}
 	})
 

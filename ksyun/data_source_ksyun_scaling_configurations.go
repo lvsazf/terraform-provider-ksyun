@@ -179,19 +179,6 @@ func dataSourceKsyunScalingConfigurations() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-
-						//"scaling_group_id_set": {
-						//	Type:     schema.TypeList,
-						//	Computed: true,
-						//	Elem: &schema.Resource{
-						//		Schema: map[string]*schema.Schema{
-						//			"scaling_group_id": {
-						//				Type:     schema.TypeString,
-						//				Computed: true,
-						//			},
-						//		},
-						//	},
-						//},
 					},
 				},
 			},
@@ -201,6 +188,8 @@ func dataSourceKsyunScalingConfigurations() *schema.Resource {
 func dataSourceKsyunScalingConfigurationsRead(d *schema.ResourceData, meta interface{}) error {
 	var result []map[string]interface{}
 	var allScalingConfigurations []interface{}
+	var err error
+	r := dataSourceKsyunScalingConfigurations()
 
 	limit := 10
 	offset := 1
@@ -210,8 +199,17 @@ func dataSourceKsyunScalingConfigurationsRead(d *schema.ResourceData, meta inter
 	result = []map[string]interface{}{}
 	readScalingConfiguration := make(map[string]interface{})
 
-	if ids, ok := d.GetOk("ids"); ok {
-		SchemaSetToInstanceMap(ids, "ScalingConfigurationId", &readScalingConfiguration)
+	var only map[string]SdkReqTransform
+	only = map[string]SdkReqTransform{
+		"ids":                        {mapping: "ScalingConfigurationId", Type: TransformWithN},
+		"project_ids":                {mapping: "ProjectId", Type: TransformWithN},
+		"scaling_configuration_name": {},
+	}
+
+	readScalingConfiguration, err = SdkRequestAutoMapping(d, r, false, only, nil)
+
+	if err != nil {
+		return fmt.Errorf("error on reading ScalingConfiguration list, %s", err)
 	}
 
 	for {
@@ -245,7 +243,7 @@ func dataSourceKsyunScalingConfigurationsRead(d *schema.ResourceData, meta inter
 		merageResultDirect(&result, allScalingConfigurations)
 	}
 
-	err := dataSourceKsyunScalingConfigurationsSave(d, result)
+	err = dataSourceKsyunScalingConfigurationsSave(d, result)
 	if err != nil {
 		return fmt.Errorf("error on reading ScalingConfigurationName list, %s", err)
 	}
@@ -288,14 +286,7 @@ func dataSourceKsyunScalingConfigurationsSave(d *schema.ResourceData, result []m
 			return item["ScalingConfigurationId"].(string)
 		},
 		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
-			//_, aaa, _ := SdkSliceMapping(nil, item["ScalingGroupIdSet"].([]interface{}), SdkSliceData{
-			//	SliceMappingFunc: func(group map[string]interface{}) map[string]interface{} {
-			//		return SdkResponseAutoMapping(resource, targetName+".scaling_group_id_set", group, nil, nil)
-			//	},
-			//})
-			//extra := make(map[string][]map[string]interface{})
-			//extra["scaling_group_id_set"] = aaa
-			return SdkResponseAutoMapping(resource, targetName, item, nil, nil, scalingConfigurationSpecialMapping())
+			return SdkResponseAutoMapping(resource, targetName, item, nil, scalingConfigurationSpecialMapping())
 		},
 		TargetName: targetName,
 	})

@@ -5,7 +5,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-ksyun/logger"
-	"strconv"
 	"time"
 )
 
@@ -180,46 +179,17 @@ func resourceKsyunScalingConfiguration() *schema.Resource {
 
 func resourceKsyunScalingConfigurationExtra() map[string]SdkRequestMapping {
 	var extra map[string]SdkRequestMapping
-	extra = make(map[string]SdkRequestMapping)
-	extra["data_disks"] = SdkRequestMapping{
-		Field: "DataDisk.",
-		FieldReqFunc: func(item interface{}, s string, m *map[string]interface{}) error {
-			if arr, ok := item.([]interface{}); ok {
-				for i, value := range arr {
-					if d, ok := value.(map[string]interface{}); ok {
-						if d["disk_type"] == "" || d["disk_size"] == 0 {
-							return fmt.Errorf(" if set data_disks, disk_type and disk_size must set value ")
-						}
-						for k, v := range d {
-							if k == "disk_type" {
-								(*m)[s+strconv.Itoa(i+1)+".Type"] = v
-							}
-							if k == "disk_size" {
-								(*m)[s+strconv.Itoa(i+1)+".Size"] = v
-							}
-							if k == "delete_with_instance" {
-								(*m)[s+strconv.Itoa(i+1)+".DeleteWithInstance"] = v
-							}
-						}
-					}
-				}
-			}
-			return nil
-		},
+	var r map[string]SdkReqTransform
+
+	r = map[string]SdkReqTransform{
+		"key_id": {Type: TransformWithN},
+		"data_disks": {mappings: map[string]string{
+			"data_disks": "DataDisk",
+			"disk_size":  "Size",
+			"disk_type":  "Type",
+		}, Type: TransformListN},
 	}
-	extra["key_id"] = SdkRequestMapping{
-		Field: "KeyId.",
-		FieldReqFunc: func(item interface{}, s string, m *map[string]interface{}) error {
-			if x, ok := item.(*schema.Set); ok {
-				for i, value := range (*x).List() {
-					if d, ok := value.(string); ok {
-						(*m)[s+strconv.Itoa(i+1)] = d
-					}
-				}
-			}
-			return nil
-		},
-	}
+	extra = SdkRequestAutoExtra(r)
 	return extra
 }
 
@@ -231,7 +201,8 @@ func resourceKsyunScalingConfigurationCreate(d *schema.ResourceData, meta interf
 	var resp *map[string]interface{}
 	var err error
 
-	createScalingConfiguration, err := SdkRequestAutoMapping(d, scalingConfiguration, false, nil, resourceKsyunScalingConfigurationExtra())
+	createScalingConfiguration, err := SdkRequestAutoMapping(d, scalingConfiguration, false, nil,
+		resourceKsyunScalingConfigurationExtra())
 	if err != nil {
 		return fmt.Errorf("error on creating ScalingConfiguration, %s", err)
 	}
@@ -308,6 +279,7 @@ func resourceKsyunScalingConfigurationDelete(d *schema.ResourceData, meta interf
 	deleteScalingConfiguration := make(map[string]interface{})
 	deleteScalingConfiguration["ScalingConfigurationId.1"] = d.Id()
 	action := "DeleteScalingConfiguration"
+	otherErrorRetry := 10
 
 	return resource.Retry(25*time.Minute, func() *resource.RetryError {
 		logger.Debug(logger.ReqFormat, action, deleteScalingConfiguration)
@@ -318,7 +290,7 @@ func resourceKsyunScalingConfigurationDelete(d *schema.ResourceData, meta interf
 		} else if notFoundError(err1) {
 			return nil
 		} else {
-			return resource.RetryableError(fmt.Errorf("error on  deleting ScalingConfiguration %q, %s", d.Id(), err1))
+			return OtherErrorProcess(&otherErrorRetry, fmt.Errorf("error on  deleting ScalingConfiguration %q, %s", d.Id(), err1))
 		}
 	})
 

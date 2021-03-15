@@ -58,7 +58,6 @@ func dataSourceKsyunInstances() *schema.Resource {
 			"network_interface": {
 				Type:     schema.TypeList,
 				Optional: true,
-				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"subnet_id": {
@@ -104,7 +103,6 @@ func dataSourceKsyunInstances() *schema.Resource {
 			"availability_zone": {
 				Type:     schema.TypeList,
 				Optional: true,
-				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -223,7 +221,6 @@ func dataSourceKsyunInstances() *schema.Resource {
 						"network_interface_set": {
 							Type:     schema.TypeList,
 							Computed: true,
-							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"network_interface_id": {
@@ -383,172 +380,85 @@ func dataSourceKsyunInstances() *schema.Resource {
 	}
 }
 
-func dataSourceKsyunInstancesRead(d *schema.ResourceData, m interface{}) error {
-	conn := m.(*KsyunClient).kecconn
-	var instances []string
+func dataSourceKsyunInstancesRead(d *schema.ResourceData, meta interface{}) error {
+	var result []map[string]interface{}
+	var all []interface{}
+	var err error
+	r := dataSourceKsyunInstances()
+
+	limit := 100
+	offset := 1
+
+	client := meta.(*KsyunClient)
+	all = []interface{}{}
+	result = []map[string]interface{}{}
 	req := make(map[string]interface{})
 
-	if ids, ok := d.GetOk("ids"); ok {
-		instances = SchemaSetToStringSlice(ids)
-	}
-	for k, v := range instances {
-		if v == "" {
-			continue
-		}
-		req[fmt.Sprintf("InstanceId.%d", k+1)] = v
-	}
-	var projectIds []string
-	if ids, ok := d.GetOk("project_id"); ok {
-		projectIds = SchemaSetToStringSlice(ids)
+	var only map[string]SdkReqTransform
+
+	only = map[string]SdkReqTransform{
+		"ids":               {mapping: "InstanceId", Type: TransformWithN},
+		"project_id":        {Type: TransformWithN},
+		"vpc_id":            {Type: TransformWithFilter},
+		"subnet_id":         {Type: TransformWithFilter},
+		"search":            {mapping: "Search"},
+		"network_interface": {Type: TransformListFilter},
+		"instance_state":    {Type: TransformListFilter},
+		"availability_zone": {mappings: map[string]string{
+			"availability_zone.name": "availability-zone-name",
+		}, Type: TransformListFilter},
 	}
 
-	for k, v := range projectIds {
-		if v == "" {
-			continue
-		}
-		req[fmt.Sprintf("ProjectId.%d", k+1)] = v
-	}
-	if search, ok := d.GetOk("search"); ok {
-		req["Search"] = search
-	}
-	filters := []string{
-		"instance_id",
-		"subnet_id",
-		"vpc_id",
-		//"network_interface",
-		//	"instance_state",
-		//	"availability_zone",
-	}
-	index := len(req) + 1
-	SchemaSetsToFilterMap(d, filters, &req)
-
-	netWorkreq := make(map[string]interface{})
-	if v, ok := d.GetOk("network_interface"); ok {
-		ConvertFilterStructPrefix(v, &netWorkreq, "network-interface")
-		for k1, v1 := range netWorkreq {
-			v2 := SchemaSetToStringSlice(v1)
-			if len(v2) == 0 {
-				continue
-			}
-			for k3, v3 := range v2 {
-				req[fmt.Sprintf("Filter.%v.Value.%d", index, k3+1)] = v3
-			}
-			req[fmt.Sprintf("Filter.%v.Name", index)] = k1
-			index++
-		}
-	}
-	statereq := make(map[string]interface{})
-	if v, ok := d.GetOk("instance_state"); ok {
-		ConvertFilterStructPrefix(v, &statereq, "instance-state")
-		for k1, v1 := range statereq {
-			v2 := SchemaSetToStringSlice(v1)
-			if len(v2) == 0 {
-				continue
-			}
-			for k3, v3 := range v2 {
-				req[fmt.Sprintf("Filter.%v.Value.%d", index, k3+1)] = v3
-			}
-			req[fmt.Sprintf("Filter.%v.Name", index)] = k1
-			index++
-		}
-	}
-	zonereq := make(map[string]interface{})
-	if v, ok := d.GetOk("availability_zone"); ok {
-		ConvertFilterStructPrefix(v, &zonereq, "availability-zone")
-		for k1, v1 := range zonereq {
-			v2 := SchemaSetToStringSlice(v1)
-			if len(v2) == 0 {
-				continue
-			}
-			for k3, v3 := range v2 {
-				req[fmt.Sprintf("Filter.%v.Value.%d", index, k3+1)] = v3
-			}
-			req[fmt.Sprintf("Filter.%v.Name", index)] = k1
-			index++
-		}
-	}
-	var allinstances []interface{}
-	var limit int = 100
-	var nextToken string
-	for {
-		req["MaxResults"] = fmt.Sprintf("%v", limit)
-		if nextToken != "" {
-			req["NextToken"] = nextToken
-		}
-		action := "DescribeInstances"
-		logger.Debug(logger.ReqFormat, action, req)
-		resp, err := conn.DescribeInstances(&req)
-		if err != nil {
-			return fmt.Errorf("error on reading instance list req(%v):%s", req, err)
-		}
-		logger.Debug(logger.RespFormat, action, req, *resp)
-		itemSet, ok := (*resp)["InstancesSet"]
-		if !ok {
-			//return fmt.Errorf("error on reading instance set")
-			break
-		}
-		items, ok := itemSet.([]interface{})
-		if !ok {
-			break
-		}
-		if items == nil || len(items) < 1 {
-			break
-		}
-		allinstances = append(allinstances, items...)
-
-		if len(items) < limit {
-			break
-		}
-		if nextTokens, ok := (*resp)["Marker"]; ok {
-			nextToken = fmt.Sprintf("%v", nextTokens)
-		} else {
-			break
-		}
-	}
-	datas := GetSubSliceDByRep(allinstances, instanceKeys)
-	dealInstanceData(datas)
-	err := dataSourceKscSave(d, "instances", instances, datas)
+	req, err = SdkRequestAutoMapping(d, r, false, only, nil)
 	if err != nil {
-		return fmt.Errorf("error on save instance list, %s", err)
+		return fmt.Errorf("error on reading Instance list, %s", err)
+	}
+
+	for {
+		req["MaxResults"] = limit
+		req["Marker"] = offset
+
+		logger.Debug(logger.ReqFormat, "DescribeInstances", req)
+		resp, err := client.kecconn.DescribeInstances(&req)
+		if err != nil {
+			return fmt.Errorf("error on reading Instance list req(%v):%v", req, err)
+		}
+		l := (*resp)["InstancesSet"].([]interface{})
+		all = append(all, l...)
+		if len(l) < limit {
+			break
+		}
+
+		offset = offset + limit
+	}
+
+	merageResultDirect(&result, all)
+
+	err = dataSourceKsyunInstancesSave(d, result)
+	if err != nil {
+		return fmt.Errorf("error on reading Instance list, %s", err)
 	}
 	return nil
 }
-func dealInstanceData(datas []map[string]interface{}) {
-	for k, v := range datas {
-		for k1, v1 := range v {
-			switch k1 {
-			case "instance_configure":
-				datas[k]["instance_configure"] = GetSubDByRep(v1, instanceConfigureKeys, map[string]bool{})
-			case "system_disk":
-				datas[k]["system_disk"] = GetSubDByRep(v1, systemDiskKeys, map[string]bool{})
-			case "monitoring":
-				datas[k]["monitoring"] = GetSubDByRep(v1, monitoringKeys, map[string]bool{})
-			case "instance_state":
-				datas[k]["instance_state"] = GetSubDByRep(v1, instanceStateKeys, map[string]bool{})
-			case "key_set":
-				datas[k]["key_id"] = v1
-				delete(datas[k], "key_set")
-			case "data_disks":
-				vv := v1.([]interface{})
-				datas[k]["data_disks"] = GetSubSliceDByRep(vv, dataDiskKeys)
 
-			case "network_interface_set":
-				vv := v1.([]interface{})
-				networkSet := GetSubSliceDByRep(vv, kecNetworkInterfaceSetKeys)
-				for itemK, itemV := range networkSet {
-					for k2, v2 := range itemV {
-						switch k2 {
-						case "group_set":
-							vv := v2.([]interface{})
-							networkSet[itemK]["group_set"] = GetSubSliceDByRep(vv, groupSetKeys)
-						case "security_group_set":
-							vv := v2.([]interface{})
-							networkSet[itemK]["security_group_set"] = GetSubSliceDByRep(vv, kecSecurityGroupSetKeys)
-						}
-					}
-				}
-				datas[k]["network_interface_set"] = networkSet
-			}
-		}
-	}
+func dataSourceKsyunInstancesSave(d *schema.ResourceData, result []map[string]interface{}) error {
+	resource := dataSourceKsyunInstances()
+	targetName := "instances"
+	_, _, err := SdkSliceMapping(d, result, SdkSliceData{
+		IdField: "InstanceId",
+		IdMappingFunc: func(idField string, item map[string]interface{}) string {
+			return item[idField].(string)
+		},
+		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
+			return SdkResponseAutoMapping(resource, targetName, item, nil, kecInstanceSpecialMapping())
+		},
+		TargetName: targetName,
+	})
+	return err
+}
+
+func kecInstanceSpecialMapping() map[string]SdkResponseMapping {
+	specialMapping := make(map[string]SdkResponseMapping)
+	specialMapping["KeySet"] = SdkResponseMapping{Field: "key_id"}
+	return specialMapping
 }

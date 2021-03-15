@@ -189,6 +189,7 @@ func resourceKsyunScalingScheduledTaskDelete(d *schema.ResourceData, meta interf
 	req["ScalingGroupId"] = strings.Split(d.Id(), ":")[1]
 	req["ScalingScheduledTaskId"] = strings.Split(d.Id(), ":")[0]
 	action := "DeleteScalingScheduledTask"
+	otherErrorRetry := 10
 
 	return resource.Retry(25*time.Minute, func() *resource.RetryError {
 		logger.Debug(logger.ReqFormat, action, req)
@@ -199,7 +200,7 @@ func resourceKsyunScalingScheduledTaskDelete(d *schema.ResourceData, meta interf
 		} else if notFoundError(err1) {
 			return nil
 		} else {
-			return resource.RetryableError(fmt.Errorf("error on  deleting ScalingScheduledTask %q, %s", d.Id(), err1))
+			return OtherErrorProcess(&otherErrorRetry, fmt.Errorf("error on  deleting ScalingScheduledTask %q, %s", d.Id(), err1))
 		}
 	})
 
