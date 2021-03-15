@@ -279,6 +279,7 @@ func resourceKsyunScalingConfigurationDelete(d *schema.ResourceData, meta interf
 	deleteScalingConfiguration := make(map[string]interface{})
 	deleteScalingConfiguration["ScalingConfigurationId.1"] = d.Id()
 	action := "DeleteScalingConfiguration"
+	otherErrorRetry := 10
 
 	return resource.Retry(25*time.Minute, func() *resource.RetryError {
 		logger.Debug(logger.ReqFormat, action, deleteScalingConfiguration)
@@ -289,7 +290,7 @@ func resourceKsyunScalingConfigurationDelete(d *schema.ResourceData, meta interf
 		} else if notFoundError(err1) {
 			return nil
 		} else {
-			return resource.RetryableError(fmt.Errorf("error on  deleting ScalingConfiguration %q, %s", d.Id(), err1))
+			return OtherErrorProcess(&otherErrorRetry, fmt.Errorf("error on  deleting ScalingConfiguration %q, %s", d.Id(), err1))
 		}
 	})
 

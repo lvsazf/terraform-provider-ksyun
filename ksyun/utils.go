@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"io/ioutil"
 	"log"
@@ -577,4 +578,13 @@ func GetSdkParam(d *schema.ResourceData, params []string) map[string]interface{}
 		}
 	}
 	return sdkParam
+}
+
+func OtherErrorProcess(remain *int, error error) *resource.RetryError {
+	*remain--
+	if *remain >= 0 {
+		return resource.RetryableError(error)
+	} else {
+		return resource.NonRetryableError(error)
+	}
 }
