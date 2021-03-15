@@ -202,6 +202,10 @@ func resourceKsyunKrds() *schema.Resource {
 				Optional: true,
 				Computed: false,
 			},
+			"vip": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"eip_port": {
 				Type:     schema.TypeInt,
 				Optional: true,
