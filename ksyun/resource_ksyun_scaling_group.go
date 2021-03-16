@@ -73,7 +73,8 @@ func resourceKsyunScalingGroup() *schema.Resource {
 
 			"security_group_id": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Computed: true,
 			},
 
 			"security_group_id_set": {
@@ -191,6 +192,22 @@ func resourceKsyunScalingGroupExtra() map[string]SdkRequestMapping {
 	return extra
 }
 
+func resourceKsyunScalingGroupReqModify(req *map[string]interface{}) error {
+	//sg
+	v1, sg := (*req)["SecurityGroupId"]
+	v2, sgn := (*req)["SecurityGroupId.1"]
+
+	if !sg && !sgn {
+		return fmt.Errorf("you must set security_group_id or security_group_id_set")
+	} else if sg && sgn {
+		if v1 != v2 {
+			return fmt.Errorf("security_group_id must equal security_group_id_set#0")
+		}
+		delete(*req, "SecurityGroupId")
+	}
+	return nil
+}
+
 func resourceKsyunScalingGroupCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*KsyunClient)
 	conn := client.kecconn
@@ -203,6 +220,7 @@ func resourceKsyunScalingGroupCreate(d *schema.ResourceData, meta interface{}) e
 	if err != nil {
 		return fmt.Errorf("error on creating ScalingGroup, %s", err)
 	}
+
 	//zero process
 	if _, ok := req["MinSize"]; !ok {
 		req["MinSize"] = 0
@@ -212,6 +230,11 @@ func resourceKsyunScalingGroupCreate(d *schema.ResourceData, meta interface{}) e
 	}
 	if _, ok := req["DesiredCapacity"]; !ok {
 		req["DesiredCapacity"] = 0
+	}
+
+	err = resourceKsyunScalingGroupReqModify(&req)
+	if err != nil {
+		return fmt.Errorf("error on creating ScalingGroup, %s", err)
 	}
 
 	action := "CreateScalingGroup"
@@ -248,6 +271,11 @@ func resourceKsyunScalingGroupUpdate(d *schema.ResourceData, meta interface{}) e
 	req, err := SdkRequestAutoMapping(d, r, true, nil, resourceKsyunScalingGroupExtra())
 	if err != nil {
 		return fmt.Errorf("error on modifying ScalingGroup, %s", err)
+	}
+
+	err = resourceKsyunScalingGroupReqModify(&req)
+	if err != nil {
+		return fmt.Errorf("error on creating ScalingGroup, %s", err)
 	}
 
 	// distinguish modify lb info or other info
