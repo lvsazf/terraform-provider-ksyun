@@ -149,6 +149,30 @@ func resourceKsyunScalingConfiguration() *schema.Resource {
 				ValidateFunc: validateKecInstanceAgent,
 			},
 
+			"address_band_width": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Computed: true,
+			},
+
+			"band_width_share_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+
+			"line_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+
+			"address_project_id": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Computed: true,
+			},
+
 			"charge_type": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -230,6 +254,7 @@ func resourceKsyunScalingConfigurationUpdate(d *schema.ResourceData, meta interf
 	if err != nil {
 		return fmt.Errorf("error on modifying ScalingConfiguration, %s", err)
 	}
+
 	if len(modifyScalingConfiguration) > 0 {
 		modifyScalingConfiguration["ScalingConfigurationId"] = d.Id()
 		action := "ModifyScalingConfiguration"

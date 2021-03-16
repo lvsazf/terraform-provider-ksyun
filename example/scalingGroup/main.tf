@@ -72,7 +72,7 @@ resource "ksyun_scaling_group" "foo" {
   max_size = 2
   desired_capacity = 0
   status = "UnActive"
-  slb_config_set = {
+  slb_config_set  {
     slb_id = "${ksyun_lb.foo.id}"
     listener_id = "${ksyun_lb_listener.foo.id}"
     server_port_set = [

@@ -179,6 +179,26 @@ func dataSourceKsyunScalingConfigurations() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+
+						"address_band_width": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+
+						"band_width_share_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+
+						"line_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+
+						"address_project_id": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
 					},
 				},
 			},
