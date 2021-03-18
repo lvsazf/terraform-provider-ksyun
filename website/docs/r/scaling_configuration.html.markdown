@@ -41,6 +41,10 @@ The following arguments are supported:
 * `data_disks` - (Optional) It is a nested type which documented below.
 * `instance_name_time_suffix` -  (Optional) The kec instance name time suffix of the desired ScalingConfiguration.
 * `user_data` - (Optional) The user data of the desired ScalingConfiguration.
+* `address_band_width` - (Optional) The EIP BandWidth .
+* `band_width_share_id` - (Optional) The ID of BandWidthShare.
+* `line_id` - (Optional) The Line ID Of EIP.
+* `address_project_id` - (Optional) The Project ID of EIP.
 
 The attribute (`data_disks`) support the following:
 

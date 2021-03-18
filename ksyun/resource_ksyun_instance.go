@@ -312,18 +312,18 @@ func resourceKsyunInstance() *schema.Resource {
 func resourceKsyunInstanceExtra(r map[string]SdkReqTransform) map[string]SdkRequestMapping {
 	var extra map[string]SdkRequestMapping
 	extra = SdkRequestAutoExtra(r)
-	extra["security_group_id"] = SdkRequestMapping{
-		Field: "SecurityGroupId",
-		FieldReqFunc: func(item interface{}, field string, source string, m *map[string]interface{}) error {
-			if a, ok := item.(*schema.Set); ok {
-				for _, sg := range (*a).List() {
-					(*m)[field] = sg
-					break
-				}
-			}
-			return nil
-		},
-	}
+	//extra["security_group_id"] = SdkRequestMapping{
+	//	Field: "SecurityGroupId",
+	//	FieldReqFunc: func(item interface{}, field string, source string, m *map[string]interface{}) error {
+	//		if a, ok := item.(*schema.Set); ok {
+	//			for _, sg := range (*a).List() {
+	//				(*m)[field] = sg
+	//				break
+	//			}
+	//		}
+	//		return nil
+	//	},
+	//}
 	return extra
 }
 
@@ -338,8 +338,9 @@ func resourceKsyunInstanceCreate(d *schema.ResourceData, meta interface{}) error
 	var only map[string]SdkReqTransform
 
 	only = map[string]SdkReqTransform{
-		"key_id":      {Type: TransformWithN},
-		"system_disk": {Type: TransformListUnique},
+		"key_id":            {Type: TransformWithN},
+		"system_disk":       {Type: TransformListUnique},
+		"security_group_id": {Type: TransformWithN},
 		"data_disks": {mappings: map[string]string{
 			"data_disks": "DataDisk",
 			"disk_size":  "Size",
@@ -388,7 +389,7 @@ func resourceKsyunInstanceCreate(d *schema.ResourceData, meta interface{}) error
 	_, err = stateConf.WaitForState()
 
 	//set sg
-	err = addSecurityGroupsAfterCreate(d, meta)
+	//err = addSecurityGroupsAfterCreate(d, meta)
 
 	if err := resourceKsyunInstanceRead(d, meta); err != nil {
 		return err

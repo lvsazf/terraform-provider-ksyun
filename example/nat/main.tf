@@ -12,6 +12,6 @@ resource "ksyun_nat" "foo" {
   project_id = "0"
   nat_type = "public"
   band_width = 1
-  charge_type = "DailyPaidByTransfer"
+  charge_type = "Daily"
   vpc_id = "${ksyun_vpc.test.id}"
 }

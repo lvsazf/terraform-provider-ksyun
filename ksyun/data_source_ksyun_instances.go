@@ -387,7 +387,7 @@ func dataSourceKsyunInstancesRead(d *schema.ResourceData, meta interface{}) erro
 	r := dataSourceKsyunInstances()
 
 	limit := 100
-	offset := 1
+	offset := 0
 
 	client := meta.(*KsyunClient)
 	all = []interface{}{}
