@@ -100,7 +100,6 @@ func resourceKsyunNat() *schema.Resource {
 			"associate_nat_set": {
 				Type:     schema.TypeList,
 				Computed: true,
-				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"subnet_id": {
@@ -169,8 +168,10 @@ func resourceKsyunNatRead(d *schema.ResourceData, meta interface{}) error {
 			d.SetId("")
 			return nil
 		}
-		SdkResponseAutoResourceData(d, resourceKsyunNat(), items[0], nil)
-		//SetResourceDataByResp(d, items[0], natKeys)
+		if _, ok := items[0].(map[string]interface{})["AssociateNatSet"]; !ok {
+			items[0].(map[string]interface{})["AssociateNatSet"] = []interface{}{}
+		}
+		SdkResponseAutoResourceData(d, resourceKsyunNat(), items[0], resourceKsyunNatExtra())
 	}
 	return nil
 }
@@ -226,4 +227,25 @@ func resourceKsyunNatDelete(d *schema.ResourceData, meta interface{}) error {
 		}
 	})
 
+}
+
+func resourceKsyunNatExtra() map[string]SdkResponseMapping {
+	extra := make(map[string]SdkResponseMapping)
+	extra["ChargeType"] = SdkResponseMapping{
+		Field: "charge_type",
+		FieldRespFunc: func(i interface{}) interface{} {
+			charge := i.(string)
+			switch charge {
+			case "PostPaidByPeak":
+				return "Peak"
+			case "PostPaidByDay":
+				return "Daily"
+			case "PostPaidByTransfer":
+				return "TrafficMonthly"
+			default:
+				return charge
+			}
+		},
+	}
+	return extra
 }

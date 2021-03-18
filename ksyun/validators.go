@@ -117,7 +117,7 @@ func validateNatBandWidth(v interface{}, k string) (ws []string, errors []error)
 
 func validateNatChargeType(v interface{}, k string) (ws []string, errors []error) {
 	value := v.(string)
-	if value != "Monthly" && value != "Peak" && value != "Daily" && value != "TrafficMonthly" &&
+	if value != "Peak" && value != "Daily" && value != "TrafficMonthly" &&
 		value != "DailyPaidByTransfer" && value != "PostPaidByAdvanced95Peak" {
 		errors = append(errors, fmt.Errorf(
 			"%q must contain a valid nat charge type and control by price system, got error parsing: %s", k, value))

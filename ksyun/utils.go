@@ -401,7 +401,11 @@ func SdkResponseAutoResourceData(d *schema.ResourceData, resource *schema.Resour
 						value = v
 					}
 				} else {
-					value = v
+					if m.FieldRespFunc != nil {
+						value = m.FieldRespFunc(v)
+					} else {
+						value = v
+					}
 				}
 			} else {
 				continue
