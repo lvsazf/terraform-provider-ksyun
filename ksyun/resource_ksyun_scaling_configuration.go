@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-ksyun/logger"
 	"time"
 )
@@ -149,6 +150,31 @@ func resourceKsyunScalingConfiguration() *schema.Resource {
 				ValidateFunc: validateKecInstanceAgent,
 			},
 
+			"address_band_width": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IntAtLeast(1),
+			},
+
+			"band_width_share_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+
+			"line_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+
+			"address_project_id": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Computed: true,
+			},
+
 			"charge_type": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -230,6 +256,7 @@ func resourceKsyunScalingConfigurationUpdate(d *schema.ResourceData, meta interf
 	if err != nil {
 		return fmt.Errorf("error on modifying ScalingConfiguration, %s", err)
 	}
+
 	if len(modifyScalingConfiguration) > 0 {
 		modifyScalingConfiguration["ScalingConfigurationId"] = d.Id()
 		action := "ModifyScalingConfiguration"
@@ -248,13 +275,9 @@ func resourceKsyunScalingConfigurationRead(d *schema.ResourceData, meta interfac
 
 	readScalingConfiguration := make(map[string]interface{})
 	readScalingConfiguration["ScalingConfigurationId.1"] = d.Id()
-	if pj, ok := d.GetOk("project_id"); ok {
-		readScalingConfiguration["ProjectId.1"] = fmt.Sprintf("%v", pj)
-	} else {
-		projectErr := GetProjectInfo(&readScalingConfiguration, client)
-		if projectErr != nil {
-			return projectErr
-		}
+	projectErr := AddProjectInfo(d, &readScalingConfiguration, client)
+	if projectErr != nil {
+		return projectErr
 	}
 	action := "DescribeScalingConfiguration"
 	logger.Debug(logger.ReqFormat, action, readScalingConfiguration)
