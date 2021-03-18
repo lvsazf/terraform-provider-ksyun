@@ -97,19 +97,6 @@ func resourceKsyunNat() *schema.Resource {
 				},
 			},
 
-			"associate_nat_set": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"subnet_id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
-			},
-
 			"create_time": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -167,9 +154,6 @@ func resourceKsyunNatRead(d *schema.ResourceData, meta interface{}) error {
 		if !ok || len(items) == 0 {
 			d.SetId("")
 			return nil
-		}
-		if _, ok := items[0].(map[string]interface{})["AssociateNatSet"]; !ok {
-			items[0].(map[string]interface{})["AssociateNatSet"] = []interface{}{}
 		}
 		SdkResponseAutoResourceData(d, resourceKsyunNat(), items[0], resourceKsyunNatExtra())
 	}
