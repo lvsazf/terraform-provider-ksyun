@@ -192,12 +192,12 @@ func resourceKsyunScalingGroupExtra() map[string]SdkRequestMapping {
 	return extra
 }
 
-func resourceKsyunScalingGroupReqModify(req *map[string]interface{}) error {
+func resourceKsyunScalingGroupReqModify(req *map[string]interface{}, update bool) error {
 	//sg
 	v1, sg := (*req)["SecurityGroupId"]
 	v2, sgn := (*req)["SecurityGroupId.1"]
 
-	if !sg && !sgn {
+	if !sg && !sgn && !update {
 		return fmt.Errorf("you must set security_group_id or security_group_id_set")
 	} else if sg && sgn {
 		if v1 != v2 {
@@ -232,7 +232,7 @@ func resourceKsyunScalingGroupCreate(d *schema.ResourceData, meta interface{}) e
 		req["DesiredCapacity"] = 0
 	}
 
-	err = resourceKsyunScalingGroupReqModify(&req)
+	err = resourceKsyunScalingGroupReqModify(&req, false)
 	if err != nil {
 		return fmt.Errorf("error on creating ScalingGroup, %s", err)
 	}
@@ -273,9 +273,9 @@ func resourceKsyunScalingGroupUpdate(d *schema.ResourceData, meta interface{}) e
 		return fmt.Errorf("error on modifying ScalingGroup, %s", err)
 	}
 
-	err = resourceKsyunScalingGroupReqModify(&req)
+	err = resourceKsyunScalingGroupReqModify(&req, true)
 	if err != nil {
-		return fmt.Errorf("error on creating ScalingGroup, %s", err)
+		return fmt.Errorf("error on modifying ScalingGroup, %s", err)
 	}
 
 	// distinguish modify lb info or other info

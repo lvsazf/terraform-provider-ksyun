@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-ksyun/logger"
 	"time"
 )
@@ -150,9 +151,10 @@ func resourceKsyunScalingConfiguration() *schema.Resource {
 			},
 
 			"address_band_width": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Computed: true,
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IntAtLeast(1),
 			},
 
 			"band_width_share_id": {
@@ -273,13 +275,9 @@ func resourceKsyunScalingConfigurationRead(d *schema.ResourceData, meta interfac
 
 	readScalingConfiguration := make(map[string]interface{})
 	readScalingConfiguration["ScalingConfigurationId.1"] = d.Id()
-	if pj, ok := d.GetOk("project_id"); ok {
-		readScalingConfiguration["ProjectId.1"] = fmt.Sprintf("%v", pj)
-	} else {
-		projectErr := GetProjectInfo(&readScalingConfiguration, client)
-		if projectErr != nil {
-			return projectErr
-		}
+	projectErr := AddProjectInfo(d, &readScalingConfiguration, client)
+	if projectErr != nil {
+		return projectErr
 	}
 	action := "DescribeScalingConfiguration"
 	logger.Debug(logger.ReqFormat, action, readScalingConfiguration)

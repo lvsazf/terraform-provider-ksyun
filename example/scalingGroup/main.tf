@@ -24,6 +24,12 @@ resource "ksyun_security_group" "foo" {
   security_group_name = "tf-acc-sg"
 }
 
+resource "ksyun_security_group" "foo1" {
+  vpc_id = "${ksyun_vpc.foo.id}"
+  security_group_name = "tf-acc-sg1"
+}
+
+
 resource "ksyun_lb" "foo" {
   vpc_id = "${ksyun_vpc.foo.id}"
   load_balancer_name = "tf-acc-lb"
@@ -66,18 +72,13 @@ resource "ksyun_scaling_configuration" "foo" {
 resource "ksyun_scaling_group" "foo" {
   subnet_id_set = [
     "${ksyun_subnet.foo.id}"]
-  security_group_id = "${ksyun_security_group.foo.id}"
+  security_group_id_set = ["${ksyun_security_group.foo.id}","${ksyun_security_group.foo1.id}"]
   scaling_configuration_id = "${ksyun_scaling_configuration.foo.id}"
   min_size = 0
   max_size = 2
   desired_capacity = 0
   status = "UnActive"
-  slb_config_set  {
-    slb_id = "${ksyun_lb.foo.id}"
-    listener_id = "${ksyun_lb_listener.foo.id}"
-    server_port_set = [
-      80]
-  }
+  slb_config_set = []
 }
 
 

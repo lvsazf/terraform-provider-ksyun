@@ -41,7 +41,7 @@ The following arguments are supported:
 * `desired_capacity` (Optional) - The Desire Capacity KEC instance count of the desired ScalingGroup set to.Valid Value 0-10.
 * `instance_num` - (Optional) The KEC instance Number of the desired ScalingGroup set to.Valid Value 0-10.
 * `remove_policy` - (Optional) The KEC instance remove policy of the desired ScalingGroup set to.Valid Values:'RemoveOldestInstance', 'RemoveNewestInstance'.
-* `security_group_id` - (Required) The Security Group ID of the desired ScalingGroup set to.
+* `security_group_id_set` - (Required) The Security Group ID List of the desired ScalingGroup set to.  
 * `status` -  (Optional) The Status of the desired ScalingGroup.Valid Values:'Active', 'UnActive'.
 * `subnet_strategy` - (Optional) The Subnet Strategy of the desired ScalingGroup set to.Valid Values:'balanced-distribution', 'choice-first'.
 * `subnet_id_set` - (Optional) The Subnet ID Set of the desired ScalingGroup set to.

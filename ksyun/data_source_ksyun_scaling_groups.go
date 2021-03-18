@@ -105,6 +105,15 @@ func dataSourceKsyunScalingGroups() *schema.Resource {
 							Computed: true,
 						},
 
+						"security_group_id_set": {
+							Type:     schema.TypeSet,
+							Computed: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+							Set: schema.HashString,
+						},
+
 						"status": {
 							Type:     schema.TypeString,
 							Computed: true,
