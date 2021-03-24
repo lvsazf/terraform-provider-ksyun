@@ -356,7 +356,67 @@ func resourceKsyunScalingGroupDelete(d *schema.ResourceData, meta interface{}) e
 	client := meta.(*KsyunClient)
 	conn := client.kecconn
 	req := make(map[string]interface{})
+	//before delete need set DesiredCapacity=0 to release instance
+	req["ScalingGroupId"] = d.Id()
+	req["DesiredCapacity"] = 0
+	req["MinSize"] = 0
+	_, err := conn.ModifyScalingGroup(&req)
+	if err != nil {
+		return fmt.Errorf("error on deleting ScalingGroup, %s", err)
+	}
+	for k, _ := range req {
+		delete(req, k)
+	}
+	//query instance is empty
 	req["ScalingGroupId.1"] = d.Id()
+	_ = resource.Retry(25*time.Minute, func() *resource.RetryError {
+		resp, err1 := conn.DescribeScalingInstance(&req)
+		if err1 != nil {
+			return resource.NonRetryableError(fmt.Errorf("error on deleting ScalingGroup, %s", err))
+		}
+		if resp != nil {
+			count, err1 := getSdkValue("ScalingInstanceCount", *resp)
+			if err1 != nil {
+				return resource.NonRetryableError(fmt.Errorf("error on deleting ScalingGroup, %s", err))
+			}
+			if v, ok := count.(int); ok {
+				if v > 0 {
+					return resource.RetryableError(fmt.Errorf("retry DescribeScalingInstance wait zero Instance, %s", err))
+				} else {
+					return nil
+				}
+			}
+		}
+		return resource.NonRetryableError(fmt.Errorf("error on deleting ScalingGroup"))
+	})
+	//query ScalingActivity is stop
+	_ = resource.Retry(25*time.Minute, func() *resource.RetryError {
+		resp, err1 := conn.DescribeScalingActivity(&req)
+		if err1 != nil {
+			return resource.NonRetryableError(fmt.Errorf("error on deleting ScalingGroup, %s", err))
+		}
+		if resp != nil {
+			active, err1 := getSdkValue("ScalingActivitySet", *resp)
+			if err1 != nil {
+				return resource.NonRetryableError(fmt.Errorf("error on deleting ScalingGroup, %s", err))
+			}
+			if v, ok := active.([]interface{}); ok {
+				if len(v) > 0 {
+					for _, v1 := range v {
+						status := v1.(map[string]interface{})["Status"].(int)
+						if status == 1 {
+							return resource.RetryableError(fmt.Errorf("need wait ScalingActivity stop, %s", err))
+						}
+					}
+					return nil
+				} else {
+					return nil
+				}
+			}
+		}
+		return resource.NonRetryableError(fmt.Errorf("error on deleting ScalingGroup"))
+	})
+
 	action := "DeleteScalingGroup"
 	otherErrorRetry := 10
 
@@ -366,7 +426,7 @@ func resourceKsyunScalingGroupDelete(d *schema.ResourceData, meta interface{}) e
 		logger.Debug(logger.AllFormat, action, req, resp, err1)
 		if err1 == nil {
 			return nil
-		} else if notFoundError(err1) {
+		} else if notFoundErrorNew(err1) {
 			return nil
 		} else {
 			return OtherErrorProcess(&otherErrorRetry, fmt.Errorf("error on  deleting ScalingGroup %q, %s", d.Id(), err1))
