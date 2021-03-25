@@ -121,48 +121,41 @@ func resourceKsyunSubnet() *schema.Resource {
 	}
 }
 
+func resourceKsyunSubnetReq(req *map[string]interface{}) {
+	for k, v := range *req {
+		if k == "SubnetType" && v.(string) != "Reserve" {
+			gw, start, end := getCidrIpRange((*req)["CidrBlock"].(string))
+			if _, ok := (*req)["GatewayIp"]; !ok {
+				(*req)["GatewayIp"] = gw
+			}
+			if _, ok := (*req)["DhcpIpFrom"]; !ok {
+				(*req)["DhcpIpFrom"] = start
+			}
+			if _, ok := (*req)["DhcpIpTo"]; !ok {
+				(*req)["DhcpIpTo"] = end
+			}
+		}
+	}
+}
+
 func resourceKsyunSubnetCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*KsyunClient)
 	conn := client.vpcconn
+	r := resourceKsyunSubnet()
 
 	var resp *map[string]interface{}
 	var err error
-	creates := []string{
-		"availability_zone",
-		"subnet_name",
-		"cidr_block",
-		"subnet_type",
-		"dhcp_ip_from",
-		"dhcp_ip_to",
-		"gateway_ip",
-		"vpc_id",
-		"dns1",
-		"dns2",
-	}
-	createSubnet := make(map[string]interface{})
-	for _, v := range creates {
-		if v1, ok := d.GetOk(v); ok {
-			vv := Downline2Hump(v)
-			createSubnet[vv] = fmt.Sprintf("%v", v1)
-		}
-	}
 
-	if d.Get("subnet_type") != "Reserve" && (d.Get("gateway_ip") == nil || d.Get("gateway_ip") == "") {
-		return fmt.Errorf("subnet_type not Reserve,Must set gateway_ip")
+	req, err := SdkRequestAutoMapping(d, r, false, nil, nil)
+	if err != nil {
+		return fmt.Errorf("error on creating ScalingPolicy, %s", err)
 	}
-
-	if d.Get("subnet_type") != "Reserve" && (d.Get("dhcp_ip_from") == nil || d.Get("dhcp_ip_from") == "") {
-		return fmt.Errorf("subnet_type not Reserve,Must set dhcp_ip_from")
-	}
-
-	if d.Get("subnet_type") != "Reserve" && (d.Get("dhcp_ip_to") == nil || d.Get("dhcp_ip_to") == "") {
-		return fmt.Errorf("subnet_type not Reserve,Must set dhcp_ip_to")
-	}
+	resourceKsyunSubnetReq(&req)
 
 	action := "CreateSubnet"
-	logger.Debug(logger.ReqFormat, action, createSubnet)
-	resp, err = conn.CreateSubnet(&createSubnet)
-	logger.Debug(logger.AllFormat, action, createSubnet, *resp, err)
+	logger.Debug(logger.ReqFormat, action, req)
+	resp, err = conn.CreateSubnet(&req)
+	logger.Debug(logger.AllFormat, action, req, resp, err)
 	if err != nil {
 		return fmt.Errorf("error on creating Subnet, %s", err)
 	}
@@ -177,14 +170,13 @@ func resourceKsyunSubnetRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*KsyunClient)
 	conn := client.vpcconn
 
-	readSubnet := make(map[string]interface{})
-	readSubnet["SubnetId.1"] = d.Id()
+	req := make(map[string]interface{})
+	req["SubnetId.1"] = d.Id()
 	action := "DescribeSubnets"
-	logger.Debug(logger.ReqFormat, action, readSubnet)
-	resp, err := conn.DescribeSubnets(&readSubnet)
-	logger.Debug(logger.AllFormat, action, readSubnet, *resp, err)
+	logger.Debug(logger.ReqFormat, action, req)
+	resp, err := conn.DescribeSubnets(&req)
 	if err != nil {
-		return fmt.Errorf("error on reading Subnet %q, %s", d.Id(), err)
+		return fmt.Errorf("error on reading DescribeSubnets %q, %s", d.Id(), err)
 	}
 	if resp != nil {
 		items, ok := (*resp)["SubnetSet"].([]interface{})
@@ -192,7 +184,7 @@ func resourceKsyunSubnetRead(d *schema.ResourceData, meta interface{}) error {
 			d.SetId("")
 			return nil
 		}
-		SetDByResp(d, items[0], subnetKeys, map[string]bool{})
+		SdkResponseAutoResourceData(d, resourceKsyunSubnet(), items[0], nil)
 	}
 	return nil
 }
@@ -200,36 +192,25 @@ func resourceKsyunSubnetRead(d *schema.ResourceData, meta interface{}) error {
 func resourceKsyunSubnetUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*KsyunClient)
 	conn := client.vpcconn
-	//d.Partial(true)
-	attributeUpdate := false
-	modifySubnet := make(map[string]interface{})
-	modifySubnet["SubnetId"] = d.Id()
+	r := resourceKsyunSubnet()
 
-	if d.HasChange("subnet_name") && !d.IsNewResource() && d.Get("subnet_name") != "" {
-		modifySubnet["SubnetName"] = fmt.Sprintf("%v", d.Get("subnet_name"))
-		attributeUpdate = true
+	var resp *map[string]interface{}
+	var err error
+
+	req, err := SdkRequestAutoMapping(d, r, true, nil, nil)
+	if err != nil {
+		return fmt.Errorf("error on creating ScalingPolicy, %s", err)
 	}
-	if d.HasChange("dns1") && !d.IsNewResource() && d.Get("dns1") != "" {
-		modifySubnet["Dns1"] = fmt.Sprintf("%v", d.Get("dns1"))
-		attributeUpdate = true
-	}
-	if d.HasChange("dns2") && !d.IsNewResource() && d.Get("dns2") != "" {
-		modifySubnet["Dns2"] = fmt.Sprintf("%v", d.Get("dns2"))
-		attributeUpdate = true
-	}
-	if attributeUpdate {
+	if len(req) > 0 {
+		req["SubnetId"] = d.Id()
 		action := "ModifySubnet"
-		logger.Debug(logger.ReqFormat, action, modifySubnet)
-		resp, err := conn.ModifySubnet(&modifySubnet)
-		logger.Debug(logger.AllFormat, action, modifySubnet, resp, err)
+		logger.Debug(logger.ReqFormat, action, req)
+		resp, err = conn.ModifySubnet(&req)
+		logger.Debug(logger.AllFormat, action, req, resp, err)
 		if err != nil {
 			return fmt.Errorf("error on updating Subnet, %s", err)
 		}
-		//d.SetPartial("subnet_name")
-		//d.SetPartial("dns1")
-		//d.SetPartial("dns2")
 	}
-	d.Partial(false)
 	return resourceKsyunSubnetRead(d, meta)
 }
 

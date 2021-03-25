@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-ksyun/logger"
 	"strings"
 	"time"
@@ -37,7 +38,14 @@ func resourceKsyunListener() *schema.Resource {
 			"listener_protocol": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
+				Default:  "TCP",
+				ForceNew: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"TCP",
+					"UDP",
+					"HTTP",
+					"HTTPS",
+				}, false),
 			},
 			"certificate_id": {
 				Type:     schema.TypeString,
@@ -46,10 +54,16 @@ func resourceKsyunListener() *schema.Resource {
 			"listener_port": {
 				Type:     schema.TypeInt,
 				Required: true,
+				ForceNew: true,
 			},
 			"method": {
 				Type:     schema.TypeString,
 				Required: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"RoundRobin",
+					"LeastConnections",
+					"MasterSlave",
+				}, false),
 			},
 			"listener_id": {
 				Type:     schema.TypeString,
@@ -59,13 +73,59 @@ func resourceKsyunListener() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"http_protocol": {
-				Type:     schema.TypeString,
+
+			"enable_http2": {
+				Type:     schema.TypeBool,
+				Optional: true,
 				Computed: true,
 			},
+
+			"tls_cipher_policy": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"TlsCipherPolicy1.0",
+					"TlsCipherPolicy1.1",
+					"TlsCipherPolicy1.2",
+					"TlsCipherPolicy1.2-strict",
+				}, false),
+			},
+			"http_protocol": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					"HTTP1.0",
+					"HTTP1.1",
+				}, false),
+			},
+
+			"band_width_out": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IntBetween(1, 10000),
+			},
+
+			"band_width_in": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IntBetween(1, 10000),
+			},
+
+			"redirect_listener_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+
 			"health_check": {
 				Type:     schema.TypeList,
 				MaxItems: 1,
+				Optional: true,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"health_check_id": {
@@ -78,57 +138,80 @@ func resourceKsyunListener() *schema.Resource {
 						},
 						"health_check_state": {
 							Type:     schema.TypeString,
-							Computed: true,
+							Optional: true,
+							Default:  "start",
+							ValidateFunc: validation.StringInSlice([]string{
+								"start",
+								"stop",
+							}, false),
 						},
 						"healthy_threshold": {
-							Type:     schema.TypeInt,
-							Computed: true,
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Default:      5,
+							ValidateFunc: validation.IntBetween(1, 10),
 						},
 						"interval": {
-							Type:     schema.TypeInt,
-							Computed: true,
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Default:      60,
+							ValidateFunc: validation.IntBetween(1, 3600),
 						},
 						"timeout": {
-							Type:     schema.TypeInt,
-							Computed: true,
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Default:      30,
+							ValidateFunc: validation.IntBetween(1, 3600),
 						},
 						"unhealthy_threshold": {
-							Type:     schema.TypeInt,
-							Computed: true,
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Default:      5,
+							ValidateFunc: validation.IntBetween(1, 10),
 						},
 						"url_path": {
 							Type:     schema.TypeString,
+							Optional: true,
 							Computed: true,
 						},
 						"host_name": {
 							Type:     schema.TypeString,
-							Computed: true,
+							Optional: true,
+							Default:  "DEFAULT",
 						},
 					},
 				},
-				Computed: true,
 			},
 			"session": {
 				Type:     schema.TypeList,
 				MaxItems: 1,
-				Optional: true,
-				Computed: true,
+				MinItems: 1,
+				Required: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"session_persistence_period": {
-							Type:     schema.TypeInt,
-							Computed: true,
-							Optional: true,
+							Type:         schema.TypeInt,
+							Computed:     true,
+							Optional:     true,
+							ValidateFunc: validation.IntBetween(1, 86400),
 						},
 						"session_state": {
 							Type:     schema.TypeString,
-							Computed: true,
+							Default:  "stop",
 							Optional: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"start",
+								"stop",
+							}, false),
 						},
 						"cookie_type": {
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"ImplantCookie",
+								"RewriteCookie",
+							}, false),
 						},
 						"cookie_name": {
 							Type:     schema.TypeString,
@@ -137,72 +220,114 @@ func resourceKsyunListener() *schema.Resource {
 						},
 					},
 				},
-				//			Set: resourceKscListenerSessionHash,
-			},
-			"real_server": {
-				Type: schema.TypeList,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"real_server_ip": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"real_server_port": {
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-						"real_server_state": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"real_server_type": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"register_id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"listener_id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"instance_id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"weight": {
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-					},
-				},
-				Computed: true,
 			},
 		},
 	}
 }
-func resourceKsyunListenerCreate(d *schema.ResourceData, m interface{}) error {
-	slbconn := m.(*KsyunClient).slbconn
-	req := make(map[string]interface{})
-	creates := []string{
-		"load_balancer_id",
-		"listener_state",
-		"listener_name",
-		"listener_protocol",
-		"certificate_id",
-		"listener_port",
-		"method",
-	}
-	for _, v := range creates {
-		if v1, ok := d.GetOk(v); ok {
-			vv := Downline2Hump(v)
-			req[vv] = fmt.Sprintf("%v", v1)
+
+func resourceKsyunListenerExtra(r map[string]SdkReqTransform, d *schema.ResourceData, forceGet bool) map[string]SdkRequestMapping {
+	var extra map[string]SdkRequestMapping
+	extra = SdkRequestAutoExtra(r, d, forceGet)
+	return extra
+}
+
+func resourceKsyunListenerReq(req *map[string]interface{}, isUpdate bool) (map[string]interface{}, error) {
+	healthCheckReq := make(map[string]interface{})
+	for k, v := range *req {
+		if strings.HasPrefix(k, "Session.") {
+			newK := strings.Replace(k, "Session.", "", -1)
+			(*req)[newK] = v
+			delete(*req, k)
+		}
+		if strings.HasPrefix(k, "HealthCheck.") {
+			newK := strings.Replace(k, "HealthCheck.", "", -1)
+			healthCheckReq[newK] = v
+			delete(*req, k)
 		}
 	}
-	if v, ok := d.GetOk("session"); ok {
-		FlatternStruct(v, &req)
+	for k, v := range *req {
+		if k == "ListenerProtocol" && !isUpdate {
+			if v.(string) == "HTTPS" || v.(string) == "HTTP" {
+				if v.(string) == "HTTPS" {
+					if _, ok := (*req)["CertificateId"]; !ok {
+						return healthCheckReq, fmt.Errorf(" certificate_id must set On listener_protocol is HTTPS")
+					}
+				}
+				if _, ok := (*req)["CookieType"]; !ok {
+					return healthCheckReq, fmt.Errorf(" cookie_type must set On listener_protocol is HTTPS or HTTP")
+				} else {
+					cookieType := (*req)["CookieType"]
+					if _, ok := (*req)["CookieName"]; !ok {
+						if cookieType == "RewriteCookie" {
+							return healthCheckReq, fmt.Errorf(" cookie_name must set On listener_protocol is HTTPS or HTTP and cookie_type is RewriteCookie")
+						}
+					}
+				}
+				if len(healthCheckReq) > 0 {
+					if _, ok := healthCheckReq["UrlPath"]; !ok {
+						return healthCheckReq, fmt.Errorf(" url_path must set On listener_protocol is HTTPS or HTTP")
+					}
+				}
+
+			} else {
+				if _, ok := (*req)["CertificateId"]; ok {
+					return healthCheckReq, fmt.Errorf(" certificate_id must not set On listener_protocol is not HTTPS")
+				}
+				if _, ok := (*req)["CookieType"]; ok {
+					return healthCheckReq, fmt.Errorf(" cookie_type must not set On listener_protocol is not HTTPS or HTTP")
+				}
+				if _, ok := (*req)["CookieName"]; ok {
+					return healthCheckReq, fmt.Errorf(" cookie_name must not set On listener_protocol is not  HTTPS or HTTP")
+				}
+				if len(healthCheckReq) > 0 {
+					if _, ok := healthCheckReq["UrlPath"]; ok {
+						return healthCheckReq, fmt.Errorf(" url_path must not set On listener_protocol is not HTTPS or HTTP")
+					}
+					if v1, ok := healthCheckReq["HostName"]; ok {
+						if v1.(string) != "DEFAULT" {
+							return healthCheckReq, fmt.Errorf(" host_name must not set On listener_protocol is not HTTPS or HTTP")
+						}
+
+					}
+				}
+
+			}
+
+		}
 	}
+
+	//default host_name
+	if !isUpdate {
+		for k, v := range healthCheckReq {
+			if k == "HostName" && v.(string) == "DEFAULT" {
+				delete(healthCheckReq, k)
+			}
+		}
+	}
+	return healthCheckReq, nil
+}
+
+func resourceKsyunListenerCreate(d *schema.ResourceData, m interface{}) error {
+	slbconn := m.(*KsyunClient).slbconn
+	r := resourceKsyunListener()
+	req := make(map[string]interface{})
+
+	var extra map[string]SdkReqTransform
+
+	extra = map[string]SdkReqTransform{
+		"health_check": {Type: TransformListUnique},
+		"session":      {Type: TransformListUnique},
+	}
+
+	req, err := SdkRequestAutoMapping(d, r, false, nil, resourceKsyunListenerExtra(extra, d, false))
+	if err != nil {
+		return fmt.Errorf(" Error CreateListeners : %s", err)
+	}
+	healthCheckReq, err := resourceKsyunListenerReq(&req, false)
+	if err != nil {
+		return fmt.Errorf(" Error CreateListeners : %s", err)
+	}
+
 	action := "CreateListeners"
 	logger.Debug(logger.ReqFormat, action, req)
 	resp, err := slbconn.CreateListeners(&req)
@@ -213,11 +338,20 @@ func resourceKsyunListenerCreate(d *schema.ResourceData, m interface{}) error {
 
 	id, ok := (*resp)["ListenerId"]
 	if !ok {
-		return fmt.Errorf("Error CreateListeners : no ListenerId found")
+		return fmt.Errorf(" Error CreateListeners : no ListenerId found")
 	}
+	if len(healthCheckReq) > 0 {
+		healthCheckReq["ListenerId"] = id.(string)
+		// create healthCheck
+		_, err = slbconn.ConfigureHealthCheck(&healthCheckReq)
+	}
+	if err != nil {
+		return fmt.Errorf(" Error CreateListeners : %s", err)
+	}
+
 	idres, ok := id.(string)
 	if !ok {
-		return fmt.Errorf("Error CreateListeners : no ListenerId found")
+		return fmt.Errorf(" Error CreateListeners : no ListenerId found")
 	}
 	d.SetId(idres)
 	if err := d.Set("listener_id", idres); err != nil {
@@ -226,106 +360,109 @@ func resourceKsyunListenerCreate(d *schema.ResourceData, m interface{}) error {
 	return resourceKsyunListenerRead(d, m)
 }
 
-func resourceKsyunListenerRead(d *schema.ResourceData, m interface{}) error {
-	slbconn := m.(*KsyunClient).slbconn
+func resourceKsyunListenerRead(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*KsyunClient)
+	conn := client.slbconn
+
 	req := make(map[string]interface{})
 	req["ListenerId.1"] = d.Id()
 	action := "DescribeListeners"
 	logger.Debug(logger.ReqFormat, action, req)
-	resp, err := slbconn.DescribeListeners(&req)
+	resp, err := conn.DescribeListeners(&req)
 	if err != nil {
-		return fmt.Errorf("Error DescribeListeners : %s", err)
+		return fmt.Errorf("error on reading DescribeListeners %q, %s", d.Id(), err)
 	}
-	logger.Debug(logger.RespFormat, action, req, *resp)
-	itemset := (*resp)["ListenerSet"]
-	items, ok := itemset.([]interface{})
-	if !ok || len(items) == 0 {
-		d.SetId("")
-		return nil
-	}
-	excludes := SetDByResp(d, items[0], listenerKeys, map[string]bool{
-		"HealthCheck": true,
-		"RealServer":  true,
-		"Session":     true},
-	)
-
-	subSession := GetSubStructDByRep(excludes["Session"], map[string]bool{})
-	if err := d.Set("session", []interface{}{subSession}); err != nil {
-		return err
-	}
-	server, ok := excludes["RealServer"].([]interface{})
-	if ok {
-		subRes := GetSubSliceDByRep(server, serverKeys)
-		if err := d.Set("real_server", subRes); err != nil {
-			return err
+	if resp != nil {
+		items, ok := (*resp)["ListenerSet"].([]interface{})
+		if !ok || len(items) == 0 {
+			d.SetId("")
+			return nil
 		}
-	}
-	subHealth := GetSubStructDByRep(excludes["HealthCheck"], map[string]bool{})
-	if err := d.Set("health_check", []interface{}{subHealth}); err != nil {
-		return err
+		SdkResponseDefault("HealthCheck.HostName", "DEFAULT", &(items[0]))
+		SdkResponseAutoResourceData(d, resourceKsyunListener(), items[0], nil)
 	}
 	return nil
 }
 
 func resourceKsyunListenerUpdate(d *schema.ResourceData, m interface{}) error {
 	slbconn := m.(*KsyunClient).slbconn
+	r := resourceKsyunListener()
+	healthCheckId := d.Get("health_check.0.health_check_id").(string)
+	var healthCheckReq map[string]interface{}
+	var err error
 	req := make(map[string]interface{})
-	req["ListenerId"] = d.Id()
-	allAttributes := []string{
-		"certificate_id",
-		"listener_name",
-		"listener_state",
-		"method",
-		/*
-			"session_state",
-			"session_persistence_period",
-			"cookie_type",
-			"cookie_name",
-		*/
+
+	var onlyHealthCheck map[string]SdkReqTransform
+	onlyHealthCheck = map[string]SdkReqTransform{
+		"health_check": {Type: TransformListUnique},
 	}
-	// Whether the representative has any modifications
-	attributeUpdate := false
-	var updates []string
-	//Get the property that needs to be modified
-	for _, v := range allAttributes {
-		if d.HasChange(v) {
-			attributeUpdate = true
-			updates = append(updates, v)
-		}
+
+	var extra map[string]SdkReqTransform
+
+	extra = map[string]SdkReqTransform{
+		"health_check": {Type: TransformListUnique},
+		"session":      {Type: TransformListUnique},
 	}
-	if d.HasChange("session") && !d.IsNewResource() {
-		FlatternStruct(d.Get("session"), &req)
-		attributeUpdate = true
+
+	if healthCheckId == "" {
+		healthCheckReq, err = SdkRequestAutoMapping(d, r, false, onlyHealthCheck, nil)
+	} else {
+		healthCheckReq, err = SdkRequestAutoMapping(d, r, true, onlyHealthCheck, nil)
 	}
-	if !attributeUpdate {
-		return nil
-	}
-	//Create a modification request
-	for _, v := range allAttributes {
-		if v1, ok := d.GetOk(v); ok {
-			req[Downline2Hump(v)] = fmt.Sprintf("%v", v1)
-		}
-	}
-	// Enable partial attribute modification
-	d.Partial(true)
-	action := "ModifyListeners"
-	logger.Debug(logger.ReqFormat, action, req)
-	resp, err := slbconn.ModifyListeners(&req)
+
 	if err != nil {
-		logger.Debug(logger.AllFormat, action, req, *resp, err)
-		if strings.Contains(err.Error(), "400") {
-			time.Sleep(time.Second * 3)
-			resp, err = slbconn.ModifyListeners(&req)
-			if err != nil {
-				return fmt.Errorf("update Listener (%v)error:%v", req, err)
+		return fmt.Errorf(" Error UpdateListeners : %s", err)
+	}
+	healthCheckReq, err = resourceKsyunListenerReq(&healthCheckReq, true)
+	if err != nil {
+		return fmt.Errorf(" Error UpdateListeners : %s", err)
+	}
+
+	req, err = SdkRequestAutoMapping(d, r, true, nil, resourceKsyunListenerExtra(extra, d, true))
+	if err != nil {
+		return fmt.Errorf(" Error UpdateListeners : %s", err)
+	}
+	_, err = resourceKsyunListenerReq(&req, true)
+	if err != nil {
+		return fmt.Errorf(" Error UpdateListeners : %s", err)
+	}
+
+	if len(healthCheckReq) > 0 {
+		if healthCheckId == "" {
+			//create
+			healthCheckReq["ListenerId"] = d.Id()
+			_, err = slbconn.ConfigureHealthCheck(&healthCheckReq)
+		} else {
+			//update
+			logger.Debug(logger.ReqFormat, "ModifyHealthCheck", req)
+			if v, ok := healthCheckReq["HostName"]; ok {
+				if v.(string) == "DEFAULT" || v.(string) == "" {
+					healthCheckReq["IsDefaultHostName"] = true
+					delete(healthCheckReq, "HostName")
+				}
 			}
+			//force set HealthCheckState if not set
+			if _, ok := healthCheckReq["HealthCheckState"]; !ok {
+				healthCheckReq["HealthCheckState"] = d.Get("health_check.0.health_check_state")
+			}
+			healthCheckReq["HealthCheckId"] = healthCheckId
+			_, err = slbconn.ModifyHealthCheck(&healthCheckReq)
+		}
+		if err != nil {
+			return fmt.Errorf(" Error UpdateListeners : %s", err)
 		}
 	}
-	logger.Debug(logger.RespFormat, action, req, *resp)
-	for _, v := range updates {
-		d.SetPartial(v)
+
+	if len(req) > 0 {
+		req["ListenerId"] = d.Id()
+		action := "ModifyListeners"
+		logger.Debug(logger.ReqFormat, action, req)
+		_, err = slbconn.ModifyListeners(&req)
+		if err != nil {
+			return fmt.Errorf(" Error UpdateListeners : %s", err)
+		}
 	}
-	d.Partial(false)
+
 	return resourceKsyunListenerRead(d, m)
 }
 

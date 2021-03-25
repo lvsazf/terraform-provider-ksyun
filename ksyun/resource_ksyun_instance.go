@@ -309,9 +309,9 @@ func resourceKsyunInstance() *schema.Resource {
 	}
 }
 
-func resourceKsyunInstanceExtra(r map[string]SdkReqTransform) map[string]SdkRequestMapping {
+func resourceKsyunInstanceExtra(r map[string]SdkReqTransform, d *schema.ResourceData, forceGet bool) map[string]SdkRequestMapping {
 	var extra map[string]SdkRequestMapping
-	extra = SdkRequestAutoExtra(r)
+	extra = SdkRequestAutoExtra(r, d, forceGet)
 	//extra["security_group_id"] = SdkRequestMapping{
 	//	Field: "SecurityGroupId",
 	//	FieldReqFunc: func(item interface{}, field string, source string, m *map[string]interface{}) error {
@@ -348,7 +348,7 @@ func resourceKsyunInstanceCreate(d *schema.ResourceData, meta interface{}) error
 		}, Type: TransformListN},
 	}
 
-	req, err := SdkRequestAutoMapping(d, r, false, nil, resourceKsyunInstanceExtra(only))
+	req, err := SdkRequestAutoMapping(d, r, false, nil, resourceKsyunInstanceExtra(only, d, false))
 	if err != nil {
 		return fmt.Errorf("error on creating Instance, %s", err)
 	}
