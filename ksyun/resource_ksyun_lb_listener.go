@@ -177,7 +177,7 @@ func resourceKsyunListener() *schema.Resource {
 						"host_name": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Computed: true,
+							Default:  "DEFAULT",
 						},
 					},
 				},
@@ -231,7 +231,7 @@ func resourceKsyunListenerExtra(r map[string]SdkReqTransform, d *schema.Resource
 	return extra
 }
 
-func resourceKsyunListenerReq(req *map[string]interface{}) (map[string]interface{}, error) {
+func resourceKsyunListenerReq(req *map[string]interface{}, isUpdate bool) (map[string]interface{}, error) {
 	healthCheckReq := make(map[string]interface{})
 	for k, v := range *req {
 		if strings.HasPrefix(k, "Session.") {
@@ -246,7 +246,7 @@ func resourceKsyunListenerReq(req *map[string]interface{}) (map[string]interface
 		}
 	}
 	for k, v := range *req {
-		if k == "ListenerProtocol" {
+		if k == "ListenerProtocol" && !isUpdate {
 			if v.(string) == "HTTPS" || v.(string) == "HTTP" {
 				if v.(string) == "HTTPS" {
 					if _, ok := (*req)["CertificateId"]; !ok {
@@ -266,9 +266,6 @@ func resourceKsyunListenerReq(req *map[string]interface{}) (map[string]interface
 				if len(healthCheckReq) > 0 {
 					if _, ok := healthCheckReq["UrlPath"]; !ok {
 						return healthCheckReq, fmt.Errorf(" url_path must set On listener_protocol is HTTPS or HTTP")
-					}
-					if _, ok := healthCheckReq["HostName"]; !ok {
-						return healthCheckReq, fmt.Errorf(" host_name must set On listener_protocol is HTTPS or HTTP")
 					}
 				}
 
@@ -296,6 +293,14 @@ func resourceKsyunListenerReq(req *map[string]interface{}) (map[string]interface
 		}
 	}
 
+	//default host_name
+	if !isUpdate {
+		for k, v := range healthCheckReq {
+			if k == "HostName" && v.(string) == "DEFAULT" {
+				delete(healthCheckReq, k)
+			}
+		}
+	}
 	return healthCheckReq, nil
 }
 
@@ -315,7 +320,7 @@ func resourceKsyunListenerCreate(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return fmt.Errorf(" Error CreateListeners : %s", err)
 	}
-	healthCheckReq, err := resourceKsyunListenerReq(&req)
+	healthCheckReq, err := resourceKsyunListenerReq(&req, false)
 	if err != nil {
 		return fmt.Errorf(" Error CreateListeners : %s", err)
 	}
@@ -370,6 +375,7 @@ func resourceKsyunListenerRead(d *schema.ResourceData, meta interface{}) error {
 			d.SetId("")
 			return nil
 		}
+		SdkResponseDefault("HealthCheck.HostName", "DEFAULT", &(items[0]))
 		SdkResponseAutoResourceData(d, resourceKsyunListener(), items[0], nil)
 	}
 	return nil
@@ -404,9 +410,7 @@ func resourceKsyunListenerUpdate(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return fmt.Errorf(" Error UpdateListeners : %s", err)
 	}
-
-	healthCheckReq["ListenerProtocol"] = d.Get("listener_protocol")
-	healthCheckReq, err = resourceKsyunListenerReq(&healthCheckReq)
+	healthCheckReq, err = resourceKsyunListenerReq(&healthCheckReq, true)
 	if err != nil {
 		return fmt.Errorf(" Error UpdateListeners : %s", err)
 	}
@@ -415,8 +419,7 @@ func resourceKsyunListenerUpdate(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return fmt.Errorf(" Error UpdateListeners : %s", err)
 	}
-	req["ListenerProtocol"] = d.Get("listener_protocol")
-	_, err = resourceKsyunListenerReq(&req)
+	_, err = resourceKsyunListenerReq(&req, true)
 	if err != nil {
 		return fmt.Errorf(" Error UpdateListeners : %s", err)
 	}
@@ -428,6 +431,17 @@ func resourceKsyunListenerUpdate(d *schema.ResourceData, m interface{}) error {
 			_, err = slbconn.ConfigureHealthCheck(&healthCheckReq)
 		} else {
 			//update
+			logger.Debug(logger.ReqFormat, "ModifyHealthCheck", req)
+			if v, ok := healthCheckReq["HostName"]; ok {
+				if v.(string) == "DEFAULT" || v.(string) == "" {
+					healthCheckReq["IsDefaultHostName"] = true
+					delete(healthCheckReq, "HostName")
+				}
+			}
+			//force set HealthCheckState if not set
+			if _, ok := healthCheckReq["HealthCheckState"]; !ok {
+				healthCheckReq["HealthCheckState"] = d.Get("health_check.0.health_check_state")
+			}
 			healthCheckReq["HealthCheckId"] = healthCheckId
 			_, err = slbconn.ModifyHealthCheck(&healthCheckReq)
 		}

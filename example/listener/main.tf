@@ -23,7 +23,7 @@ provider "ksyun" {
 resource "ksyun_lb_listener" "default" {
   listener_name = "tf-xun",
   listener_port = "8000",
-  listener_protocol = "TCP",
+  listener_protocol = "HTTP",
   listener_state = "stop",
   load_balancer_id = "2aa32091-95b8-482c-b492-597c635201d1",
   method = "RoundRobin"
@@ -37,7 +37,8 @@ resource "ksyun_lb_listener" "default" {
 //    cookie_name = "cookiexunqq"
   }
   health_check {
-//    host_name = "11"
-    health_check_state = "start"
+    host_name = ""
+    url_path = "/"
+    health_check_state = "stop"
   }
 }

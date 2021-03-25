@@ -16,7 +16,7 @@ func getCidrIpRange(cidr string) (string, string, string) {
 
 	return ipPrefix + strconv.Itoa(seg3MinIp) + "." + strconv.Itoa(seg4MinIp),
 		ipPrefix + strconv.Itoa(seg3MinIp) + "." + strconv.Itoa(seg4MinIp+1),
-		ipPrefix + strconv.Itoa(seg3MaxIp) + "." + strconv.Itoa(seg4MaxIp-1)
+		ipPrefix + strconv.Itoa(seg3MaxIp) + "." + strconv.Itoa(seg4MaxIp-2)
 }
 
 func getCidrHostNum(maskLen int) uint {

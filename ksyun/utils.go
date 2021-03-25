@@ -394,6 +394,31 @@ func requestUpdateMapping(d *schema.ResourceData, k string, t SdkReqTransform, i
 	return index, err
 }
 
+func SdkResponseDefault(p string, d interface{}, item *interface{}) {
+	path := strings.Split(p, ".")
+
+	if m, ok := (*item).(map[string]interface{}); ok {
+		root := m
+		for i, s := range path {
+			if i < len(path)-1 {
+				if v1, ok := root[s]; ok {
+					if v2, ok := v1.(map[string]interface{}); ok {
+						root = v2
+					} else {
+						break
+					}
+				} else {
+					break
+				}
+			} else {
+				if _, ok := root[s]; !ok {
+					(root)[s] = d
+				}
+			}
+		}
+	}
+}
+
 func SdkResponseAutoResourceData(d *schema.ResourceData, resource *schema.Resource, item interface{}, extra map[string]SdkResponseMapping, start ...bool) interface{} {
 	setFlag := false
 	if start == nil || (len(start) > 0 && start[0]) {
