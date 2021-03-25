@@ -283,8 +283,11 @@ func resourceKsyunListenerReq(req *map[string]interface{}, isUpdate bool) (map[s
 					if _, ok := healthCheckReq["UrlPath"]; ok {
 						return healthCheckReq, fmt.Errorf(" url_path must not set On listener_protocol is not HTTPS or HTTP")
 					}
-					if _, ok := healthCheckReq["HostName"]; ok {
-						return healthCheckReq, fmt.Errorf(" host_name must not set On listener_protocol is not HTTPS or HTTP")
+					if v1, ok := healthCheckReq["HostName"]; ok {
+						if v1.(string) != "DEFAULT" {
+							return healthCheckReq, fmt.Errorf(" host_name must not set On listener_protocol is not HTTPS or HTTP")
+						}
+
 					}
 				}
 

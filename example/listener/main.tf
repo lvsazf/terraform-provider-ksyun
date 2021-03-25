@@ -31,13 +31,13 @@ resource "ksyun_lb_listener" "default" {
 //  tls_cipher_policy = "TlsCipherPolicy1.1"
 //  http_protocol = "HTTP1.1"
   session {
-    session_state = "stop"
+    session_state = "start"
     session_persistence_period = 100
     cookie_type = "ImplantCookie"
 //    cookie_name = "cookiexunqq"
   }
   health_check {
-    host_name = ""
+    host_name = "DEFAULT"
     url_path = "/"
     health_check_state = "stop"
   }
