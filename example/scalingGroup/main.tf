@@ -16,7 +16,7 @@ resource "ksyun_subnet" "foo" {
   gateway_ip = "10.0.5.1"
   dns1 = "198.18.254.41"
   dns2 = "198.18.254.40"
-  availability_zone = "cn-beijing-6b"
+  availability_zone = "cn-beijing-6a"
 }
 
 resource "ksyun_security_group" "foo" {
@@ -53,7 +53,7 @@ resource "ksyun_lb_listener" "foo" {
 resource "ksyun_scaling_configuration" "foo" {
   scaling_configuration_name = "tf-xym-sc"
   image_id = "IMG-5465174a-6d71-4770-b8e1-917a0dd92466"
-  instance_type = "N3.1B"
+  instance_type = "S4.1A"
   password = "Aa123456"
   data_disks = [
     {
@@ -74,10 +74,10 @@ resource "ksyun_scaling_group" "foo" {
     "${ksyun_subnet.foo.id}"]
   security_group_id_set = ["${ksyun_security_group.foo.id}","${ksyun_security_group.foo1.id}"]
   scaling_configuration_id = "${ksyun_scaling_configuration.foo.id}"
-  min_size = 0
+  min_size = 1
   max_size = 2
-  desired_capacity = 0
-  status = "UnActive"
+  desired_capacity = 1
+  status = "Active"
   slb_config_set = []
 }
 

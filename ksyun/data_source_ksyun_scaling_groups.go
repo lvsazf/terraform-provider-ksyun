@@ -194,7 +194,7 @@ func dataSourceKsyunScalingGroupsRead(d *schema.ResourceData, meta interface{}) 
 		"vpc_id":                   {},
 	}
 
-	req, err = SdkRequestAutoMapping(d, r, false, only, resourceKsyunScalingGroupExtra())
+	req, err = SdkRequestAutoMapping(d, r, false, only, resourceKsyunScalingGroupExtra(d, false))
 	if err != nil {
 		return fmt.Errorf("error on reading ScalingGroup list, %s", err)
 	}

@@ -203,7 +203,7 @@ func resourceKsyunScalingConfiguration() *schema.Resource {
 	}
 }
 
-func resourceKsyunScalingConfigurationExtra() map[string]SdkRequestMapping {
+func resourceKsyunScalingConfigurationExtra(d *schema.ResourceData, forceGet bool) map[string]SdkRequestMapping {
 	var extra map[string]SdkRequestMapping
 	var r map[string]SdkReqTransform
 
@@ -215,7 +215,7 @@ func resourceKsyunScalingConfigurationExtra() map[string]SdkRequestMapping {
 			"disk_type":  "Type",
 		}, Type: TransformListN},
 	}
-	extra = SdkRequestAutoExtra(r)
+	extra = SdkRequestAutoExtra(r, d, forceGet)
 	return extra
 }
 
@@ -228,7 +228,7 @@ func resourceKsyunScalingConfigurationCreate(d *schema.ResourceData, meta interf
 	var err error
 
 	createScalingConfiguration, err := SdkRequestAutoMapping(d, scalingConfiguration, false, nil,
-		resourceKsyunScalingConfigurationExtra())
+		resourceKsyunScalingConfigurationExtra(d, false))
 	if err != nil {
 		return fmt.Errorf("error on creating ScalingConfiguration, %s", err)
 	}
@@ -252,7 +252,7 @@ func resourceKsyunScalingConfigurationUpdate(d *schema.ResourceData, meta interf
 
 	var err error
 
-	modifyScalingConfiguration, err := SdkRequestAutoMapping(d, scalingConfiguration, true, nil, resourceKsyunScalingConfigurationExtra())
+	modifyScalingConfiguration, err := SdkRequestAutoMapping(d, scalingConfiguration, true, nil, resourceKsyunScalingConfigurationExtra(d, true))
 	if err != nil {
 		return fmt.Errorf("error on modifying ScalingConfiguration, %s", err)
 	}

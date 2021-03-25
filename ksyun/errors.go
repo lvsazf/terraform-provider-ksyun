@@ -62,6 +62,20 @@ func notFoundError(err error) bool {
 	}
 	return false
 }
+
+func notFoundErrorNew(err error) bool {
+	if ksyunError, ok := err.(awserr.RequestFailure); ok && ksyunError.StatusCode() == 404 {
+		return true
+	}
+	errMessage := strings.ToLower(err.Error())
+	if strings.Contains(errMessage, "notfound") ||
+		strings.Contains(errMessage, "not_found") {
+		//strings.Contains(errMessage,"notfound"){
+		return true
+	}
+	return false
+}
+
 func inUseError(err error) bool {
 	errMessage := strings.ToLower(err.Error())
 	if strings.Contains(errMessage, "inuse") ||
