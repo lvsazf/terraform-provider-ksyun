@@ -224,34 +224,30 @@ func resourceKsyunSubnetDelete(d *schema.ResourceData, meta interface{}) error {
 	return resource.Retry(25*time.Minute, func() *resource.RetryError {
 		logger.Debug(logger.ReqFormat, action, deleteSubnet)
 		resp, err1 := conn.DeleteSubnet(&deleteSubnet)
-		logger.Debug(logger.AllFormat, action, deleteSubnet, *resp, err1)
-		if err1 == nil || (err1 != nil && notFoundError(err1)) {
+		logger.Debug(logger.AllFormat, action, deleteSubnet, resp, err1)
+		if err1 == nil {
 			return nil
+		} else {
+			//if delete error try to read and retry
+			readSubnet := make(map[string]interface{})
+			readSubnet["SubnetId.1"] = d.Id()
+			action = "DescribeSubnets"
+			logger.Debug(logger.ReqFormat, action, readSubnet)
+			resp, err := conn.DescribeSubnets(&readSubnet)
+			logger.Debug(logger.AllFormat, action, readSubnet, resp, err)
+			if err != nil {
+				return resource.NonRetryableError(fmt.Errorf("error on  reading SubnetS when delete %q, %s", d.Id(), err))
+			}
+			itemset, ok := (*resp)["SubnetSet"]
+			if !ok {
+				return nil
+			}
+			item, ok := itemset.([]interface{})
+			if !ok || len(item) == 0 {
+				return nil
+			}
+			return resource.RetryableError(fmt.Errorf("error on  deleting SubnetS %q, %s", d.Id(), err1))
 		}
-		if err1 != nil && inUseError(err1) {
-			return resource.RetryableError(err1)
-		}
-		readSubnet := make(map[string]interface{})
-		readSubnet["SubnetId.1"] = d.Id()
-		action = "DescribeSubnets"
-		logger.Debug(logger.ReqFormat, action, readSubnet)
-		resp, err := conn.DescribeSubnets(&readSubnet)
-		logger.Debug(logger.AllFormat, action, readSubnet, *resp, err)
-		if err != nil && notFoundError(err1) {
-			return nil
-		}
-		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("error on  reading SubnetS when delete %q, %s", d.Id(), err))
-		}
-		itemset, ok := (*resp)["SubnetSet"]
-		if !ok {
-			return nil
-		}
-		item, ok := itemset.([]interface{})
-		if !ok || len(item) == 0 {
-			return nil
-		}
-		return resource.RetryableError(fmt.Errorf("error on  deleting SubnetS %q, %s", d.Id(), err1))
 	})
 
 }
