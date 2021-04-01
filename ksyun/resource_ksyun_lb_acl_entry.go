@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-ksyun/logger"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ func resourceKsyunLoadBalancerAclEntry() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceKsyunLoadBalancerAclEntryCreate,
 		Delete: resourceKsyunLoadBalancerAclEntryDelete,
+		Update: resourceKsyunLoadBalancerAclEntryUpdate,
 		Read:   resourceKsyunLoadBalancerAclEntryRead,
 		Schema: map[string]*schema.Schema{
 			"load_balancer_acl_entry_id": {
@@ -21,136 +23,153 @@ func resourceKsyunLoadBalancerAclEntry() *schema.Resource {
 			},
 			"load_balancer_acl_id": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 				ForceNew: true,
 			},
 			"cidr_block": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 				ForceNew: true,
 			},
 			"rule_number": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				ForceNew: true,
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      1,
+				ValidateFunc: validation.IntBetween(1, 32766),
 			},
 			"rule_action": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
+				Default:  "allow",
+				ValidateFunc: validation.StringInSlice([]string{
+					"allow",
+					"deny",
+				}, false),
 			},
 			"protocol": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+				Default:  "ip",
+				ValidateFunc: validation.StringInSlice([]string{
+					"ip",
+				}, false),
 			},
 		},
 	}
 }
-func resourceKsyunLoadBalancerAclEntryRead(d *schema.ResourceData, m interface{}) error {
-	slbconn := m.(*KsyunClient).slbconn
+
+func resourceKsyunLoadBalancerAclEntryGet(d *schema.ResourceData, meta interface{}) (interface{}, error) {
+	client := meta.(*KsyunClient)
+	conn := client.slbconn
+
 	req := make(map[string]interface{})
 	ids := strings.Split(d.Id(), ":")
 	if len(ids) != 2 {
-		return fmt.Errorf("error id:%v", d.Id())
+		return nil, fmt.Errorf("error id:%v", d.Id())
 	}
 	req["LoadBalancerAclId.1"] = ids[0]
 	action := "DescribeLoadBalancerAcls"
 	logger.Debug(logger.ReqFormat, action, req)
-
-	resp, err := slbconn.DescribeLoadBalancerAcls(&req)
+	resp, err := conn.DescribeLoadBalancerAcls(&req)
 	if err != nil {
-		return fmt.Errorf(" read LoadBalancerAcls : %s", err)
+		return nil, fmt.Errorf("error on reading LoadBalancerAcls %q, %s", d.Id(), err)
 	}
-	logger.Debug(logger.RespFormat, action, req, *resp)
-
-	resSet := (*resp)["LoadBalancerAclSet"]
-	res, ok := resSet.([]interface{})
-	if !ok || len(res) == 0 {
-		d.SetId("")
-		return nil
-	}
-	subPara, ok := res[0].(map[string]interface{})
-	if !ok || len(subPara) == 0 {
-		d.SetId("")
-		return nil
-	}
-	lbes, ok := subPara["LoadBalancerAclEntrySet"].([]interface{})
-	if !ok || len(lbes) == 0 {
-		d.SetId("")
-		return nil
-	}
-	for _, aclEntry := range lbes {
-		aclEntryItem, ok := aclEntry.(map[string]interface{})
-		if !ok || len(aclEntryItem) == 0 {
-			d.SetId("")
-			return nil
+	var result interface{}
+	if resp != nil {
+		items, ok := (*resp)["LoadBalancerAclSet"].([]interface{})
+		if !ok || len(items) == 0 {
+			return nil, nil
 		}
-		if aclEntryItem["LoadBalancerAclEntryId"] == ids[1] {
-			for key, value := range aclEntryItem {
-				if err := d.Set(Hump2Downline(key), value); err != nil {
-					return err
-				}
-				return nil
+		entries, ok := items[0].(map[string]interface{})["LoadBalancerAclEntrySet"].([]interface{})
+		if !ok || len(entries) == 0 {
+			return nil, nil
+		}
+		for _, entry := range entries {
+			loadBalancerAclEntryId := entry.(map[string]interface{})["LoadBalancerAclEntryId"]
+			if loadBalancerAclEntryId.(string) == ids[1] {
+				result = entry
+				break
 			}
 		}
 
 	}
-	return fmt.Errorf("no LoadBalancerAclEntrySet get")
+	return result, nil
 }
-func resourceKsyunLoadBalancerAclEntryCreate(d *schema.ResourceData, m interface{}) error {
-	slbconn := m.(*KsyunClient).slbconn
-	req := make(map[string]interface{})
-	creates := []string{
-		"load_balancer_acl_id",
-		"cidr_block",
-		"rule_number",
-		"rule_action",
-		"protocol",
-	}
-	for _, v := range creates {
-		if v1, ok := d.GetOk(v); ok {
-			vv := Downline2Hump(v)
-			req[vv] = fmt.Sprintf("%v", v1)
-		}
-	}
-	action := "CreateLoadBalancerAclEntry"
-	logger.Debug(logger.ReqFormat, action, req)
-	resp, err := slbconn.CreateLoadBalancerAclEntry(&req)
-	if err != nil {
-		return fmt.Errorf("create LoadBalancerAclEntry : %s", err)
-	}
-	logger.Debug(logger.RespFormat, action, req, *resp)
 
-	loadBalancerAclEntry, ok := (*resp)["LoadBalancerAclEntry"]
-	if !ok {
-		return fmt.Errorf("create LoadBalancerAclEntry : no LoadBalancerAclEntry found")
+func resourceKsyunLoadBalancerAclEntryRead(d *schema.ResourceData, meta interface{}) error {
+	result, _ := resourceKsyunLoadBalancerAclEntryGet(d, meta)
+	if result == nil {
+		d.SetId("")
+	} else {
+		SdkResponseAutoResourceData(d, resourceKsyunLoadBalancerAclEntry(), result, nil)
 	}
-
-	lbae, ok := loadBalancerAclEntry.(map[string]interface{})
-	if !ok {
-		return fmt.Errorf("create LoadBalancerAclEntry : no LoadBalancerAclEntry data found")
-	}
-
-	id, ok := lbae["LoadBalancerAclEntryId"]
-	if !ok {
-		return fmt.Errorf("create LoadBalancerAclEntry : no LoadBalancerAclEntry id found")
-	}
-	if err := d.Set("load_balancer_acl_entry_id", id); err != nil {
-		return err
-	}
-	ids, ok := id.(string)
-	if !ok {
-		return fmt.Errorf("create LoadBalancerAclEntry : no LoadBalancerAclEntry id found")
-	}
-	SetDByResp(d, lbae, lbAclEntryKeys, map[string]bool{})
-	ids = fmt.Sprintf("%v:%v", d.Get("load_balancer_acl_id"), ids)
-	d.SetId(ids)
 	return nil
 }
 
-func resourceKsyunLoadBalancerAclEntryDelete(d *schema.ResourceData, m interface{}) error {
-	slbconn := m.(*KsyunClient).slbconn
+func resourceKsyunLoadBalancerAclEntryCreate(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*KsyunClient)
+	conn := client.slbconn
+	r := resourceKsyunLoadBalancerAclEntry()
+
+	var resp *map[string]interface{}
+	var err error
+
+	req, err := SdkRequestAutoMapping(d, r, false, nil, nil)
+	if err != nil {
+		return fmt.Errorf("error on creating LoadBalancerAclEntry, %s", err)
+	}
+
+	action := "CreateLoadBalancerAclEntry"
+	logger.Debug(logger.ReqFormat, action, req)
+	resp, err = conn.CreateLoadBalancerAclEntry(&req)
+	if err != nil {
+		return fmt.Errorf("error on creating LoadBalancerAclEntry, %s", err)
+	}
+	if resp != nil {
+		loadBalancerAclEntryId, err := getSdkValue("LoadBalancerAclEntry.LoadBalancerAclEntryId", *resp)
+		if err != nil {
+			return fmt.Errorf("error on creating LoadBalancerAclEntry, %s", err)
+		}
+		if loadBalancerAclEntryId == nil {
+			return fmt.Errorf("error on creating LoadBalancerAclEntry,loadBalancerAclEntryId not get ")
+		}
+		d.SetId(fmt.Sprintf("%s:%s", d.Get("load_balancer_acl_id").(string), loadBalancerAclEntryId.(string)))
+	}
+	return resourceKsyunLoadBalancerAclEntryRead(d, meta)
+}
+
+func resourceKsyunLoadBalancerAclEntryUpdate(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*KsyunClient)
+	conn := client.slbconn
+	ids := strings.Split(d.Id(), ":")
+	if len(ids) != 2 {
+		return fmt.Errorf("error id:%v", d.Id())
+	}
+	r := resourceKsyunLoadBalancerAclEntry()
+
+	var err error
+
+	req, err := SdkRequestAutoMapping(d, r, true, nil, nil)
+	if err != nil {
+		return fmt.Errorf("error on updating LoadBalancerAclEntry, %s", err)
+	}
+
+	if len(req) > 0 {
+		req["LoadBalancerAclEntryId"] = ids[1]
+		action := "ModifyLoadBalancerAclEntry"
+		logger.Debug(logger.ReqFormat, action, req)
+		_, err = conn.ModifyLoadBalancerAclEntry(&req)
+		if err != nil {
+			return fmt.Errorf("error on updating LoadBalancerAclEntry, %s", err)
+		}
+	}
+	return resourceKsyunLoadBalancerAclEntryRead(d, meta)
+}
+
+func resourceKsyunLoadBalancerAclEntryDelete(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*KsyunClient)
+	conn := client.slbconn
 	ids := strings.Split(d.Id(), ":")
 	if len(ids) != 2 {
 		return fmt.Errorf("error id:%v", d.Id())
@@ -158,24 +177,22 @@ func resourceKsyunLoadBalancerAclEntryDelete(d *schema.ResourceData, m interface
 	req := make(map[string]interface{})
 	req["LoadBalancerAclEntryId"] = ids[1]
 	req["LoadBalancerAclId"] = ids[0]
-	/*
-		_, err := slbconn.DeregisterInstancesFromListener(&req)
-		if err != nil {
-			return fmt.Errorf("delete LoadBalancerAclEntry error:%v", err)
-		}
-		return nil
-	*/
 	return resource.Retry(25*time.Minute, func() *resource.RetryError {
 		action := "DeleteLoadBalancerAclEntry"
 		logger.Debug(logger.ReqFormat, action, req)
-		resp, err1 := slbconn.DeleteLoadBalancerAclEntry(&req)
-		logger.Debug(logger.AllFormat, action, req, *resp, err1)
-		if err1 == nil || (err1 != nil && notFoundError(err1)) {
+		_, err1 := conn.DeleteLoadBalancerAclEntry(&req)
+		if err1 == nil {
 			return nil
+		} else {
+			//if delete error try to read and retry
+			result, err := resourceKsyunLoadBalancerAclEntryGet(d, meta)
+			if err != nil {
+				return resource.NonRetryableError(fmt.Errorf("error on  reading LoadBalancerAclEntry when delete %q, %s", d.Id(), err))
+			}
+			if result == nil {
+				return nil
+			}
+			return resource.RetryableError(fmt.Errorf("error on  deleting LoadBalancerAclEntry %q, %s", d.Id(), err1))
 		}
-		if err1 != nil && inUseError(err1) {
-			return resource.RetryableError(err1)
-		}
-		return resource.NonRetryableError(fmt.Errorf("DeleteLoadBalancerAclEntry error:%v", err1))
 	})
 }
