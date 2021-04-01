@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-ksyun/logger"
 	"strconv"
 	"strings"
@@ -114,6 +115,15 @@ func resourceKsyunScalingGroup() *schema.Resource {
 							Optional: true,
 							Default:  20,
 						},
+						"health_check_type": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Default:  "slb",
+							ValidateFunc: validation.StringInSlice([]string{
+								"slb",
+								"kec",
+							}, false),
+						},
 						"server_port_set": {
 							Type:     schema.TypeSet,
 							Optional: true,
@@ -174,6 +184,9 @@ func resourceKsyunScalingGroupExtra(d *schema.ResourceData, forceGet bool) map[s
 							}
 							if k == "weight" {
 								(*m)[s+strconv.Itoa(i+1)+".Weight"] = v
+							}
+							if k == "health_check_type" {
+								(*m)[s+strconv.Itoa(i+1)+".HealthCheckType"] = v
 							}
 							if k == "server_port_set" {
 								if x, ok := v.(*schema.Set); ok {

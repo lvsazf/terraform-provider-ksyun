@@ -155,6 +155,10 @@ func dataSourceKsyunScalingGroups() *schema.Resource {
 										Type:     schema.TypeInt,
 										Computed: true,
 									},
+									"health_check_type": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
 									"server_port_set": {
 										Type:     schema.TypeSet,
 										Computed: true,
