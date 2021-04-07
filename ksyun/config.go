@@ -13,6 +13,7 @@ import (
 	"github.com/KscSDK/ksc-sdk-go/service/kec"
 	"github.com/KscSDK/ksc-sdk-go/service/krds"
 	"github.com/KscSDK/ksc-sdk-go/service/mongodb"
+	"github.com/KscSDK/ksc-sdk-go/service/rabbitmq"
 	"github.com/KscSDK/ksc-sdk-go/service/sks"
 	"github.com/KscSDK/ksc-sdk-go/service/slb"
 	"github.com/KscSDK/ksc-sdk-go/service/sqlserver"
@@ -57,6 +58,7 @@ func (c *Config) Client() (*KsyunClient, error) {
 	client.ebsconn = ebs.SdkNew(cli, cfg, url)
 	client.mongodbconn = mongodb.SdkNew(cli, cfg, url)
 	client.iamconn = iam.SdkNew(cli, cfg, url)
+	client.rabbitmqconn = rabbitmq.SdkNew(cli, cfg, url)
 
 	credentials := credentials.NewStaticCredentials(c.AccessKey, c.SecretKey, "")
 	client.ks3conn = s3.New(&aws.Config{

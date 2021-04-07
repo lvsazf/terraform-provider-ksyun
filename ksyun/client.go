@@ -11,6 +11,7 @@ import (
 	"github.com/KscSDK/ksc-sdk-go/service/kec"
 	"github.com/KscSDK/ksc-sdk-go/service/krds"
 	"github.com/KscSDK/ksc-sdk-go/service/mongodb"
+	"github.com/KscSDK/ksc-sdk-go/service/rabbitmq"
 	"github.com/KscSDK/ksc-sdk-go/service/sks"
 	"github.com/KscSDK/ksc-sdk-go/service/slb"
 	"github.com/KscSDK/ksc-sdk-go/service/sqlserver"
@@ -35,4 +36,5 @@ type KsyunClient struct {
 	mongodbconn   *mongodb.Mongodb
 	ks3conn       *s3.S3
 	iamconn       *iam.Iam
+	rabbitmqconn  *rabbitmq.Rabbitmq
 }
