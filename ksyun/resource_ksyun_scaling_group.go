@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-ksyun/logger"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -63,6 +65,7 @@ func resourceKsyunScalingGroup() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,
+				MinItems: 1,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -71,7 +74,19 @@ func resourceKsyunScalingGroup() *schema.Resource {
 
 			"security_group_id": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Computed: true,
+			},
+
+			"security_group_id_set": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Computed: true,
+				MinItems: 1,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Set: schema.HashString,
 			},
 
 			"status": {
@@ -99,6 +114,15 @@ func resourceKsyunScalingGroup() *schema.Resource {
 							Type:     schema.TypeInt,
 							Optional: true,
 							Default:  20,
+						},
+						"health_check_type": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Default:  "slb",
+							ValidateFunc: validation.StringInSlice([]string{
+								"slb",
+								"kec",
+							}, false),
 						},
 						"server_port_set": {
 							Type:     schema.TypeSet,
@@ -136,9 +160,15 @@ func resourceKsyunScalingGroup() *schema.Resource {
 	}
 }
 
-func resourceKsyunScalingGroupExtra() map[string]SdkRequestMapping {
+func resourceKsyunScalingGroupExtra(d *schema.ResourceData, forceGet bool) map[string]SdkRequestMapping {
 	var extra map[string]SdkRequestMapping
-	extra = make(map[string]SdkRequestMapping)
+	var r map[string]SdkReqTransform
+
+	r = map[string]SdkReqTransform{
+		"subnet_id_set":         {mapping: "SubnetId", Type: TransformWithN},
+		"security_group_id_set": {mapping: "SecurityGroupId", Type: TransformWithN},
+	}
+	extra = SdkRequestAutoExtra(r, d, forceGet)
 	extra["slb_config_set"] = SdkRequestMapping{
 		Field: "Slb.",
 		FieldReqFunc: func(item interface{}, s string, source string, m *map[string]interface{}) error {
@@ -155,6 +185,9 @@ func resourceKsyunScalingGroupExtra() map[string]SdkRequestMapping {
 							if k == "weight" {
 								(*m)[s+strconv.Itoa(i+1)+".Weight"] = v
 							}
+							if k == "health_check_type" {
+								(*m)[s+strconv.Itoa(i+1)+".HealthCheckType"] = v
+							}
 							if k == "server_port_set" {
 								if x, ok := v.(*schema.Set); ok {
 									for j, v1 := range (*x).List() {
@@ -169,20 +202,23 @@ func resourceKsyunScalingGroupExtra() map[string]SdkRequestMapping {
 			return nil
 		},
 	}
-	extra["subnet_id_set"] = SdkRequestMapping{
-		Field: "SubnetId.",
-		FieldReqFunc: func(item interface{}, s string, source string, m *map[string]interface{}) error {
-			if x, ok := item.(*schema.Set); ok {
-				for i, value := range (*x).List() {
-					if d, ok := value.(string); ok {
-						(*m)[s+strconv.Itoa(i+1)] = d
-					}
-				}
-			}
-			return nil
-		},
-	}
 	return extra
+}
+
+func resourceKsyunScalingGroupReqModify(req *map[string]interface{}, update bool) error {
+	//sg
+	v1, sg := (*req)["SecurityGroupId"]
+	v2, sgn := (*req)["SecurityGroupId.1"]
+
+	if !sg && !sgn && !update {
+		return fmt.Errorf("you must set security_group_id or security_group_id_set")
+	} else if sg && sgn {
+		if v1 != v2 {
+			return fmt.Errorf("security_group_id must equal security_group_id_set#0")
+		}
+		delete(*req, "SecurityGroupId")
+	}
+	return nil
 }
 
 func resourceKsyunScalingGroupCreate(d *schema.ResourceData, meta interface{}) error {
@@ -193,10 +229,11 @@ func resourceKsyunScalingGroupCreate(d *schema.ResourceData, meta interface{}) e
 	var resp *map[string]interface{}
 	var err error
 
-	req, err := SdkRequestAutoMapping(d, r, false, nil, resourceKsyunScalingGroupExtra())
+	req, err := SdkRequestAutoMapping(d, r, false, nil, resourceKsyunScalingGroupExtra(d, false))
 	if err != nil {
 		return fmt.Errorf("error on creating ScalingGroup, %s", err)
 	}
+
 	//zero process
 	if _, ok := req["MinSize"]; !ok {
 		req["MinSize"] = 0
@@ -206,6 +243,11 @@ func resourceKsyunScalingGroupCreate(d *schema.ResourceData, meta interface{}) e
 	}
 	if _, ok := req["DesiredCapacity"]; !ok {
 		req["DesiredCapacity"] = 0
+	}
+
+	err = resourceKsyunScalingGroupReqModify(&req, false)
+	if err != nil {
+		return fmt.Errorf("error on creating ScalingGroup, %s", err)
 	}
 
 	action := "CreateScalingGroup"
@@ -235,23 +277,50 @@ func resourceKsyunScalingGroupUpdate(d *schema.ResourceData, meta interface{}) e
 	client := meta.(*KsyunClient)
 	conn := client.kecconn
 	r := resourceKsyunScalingGroup()
+	var action string
 
 	var err error
 
-	req, err := SdkRequestAutoMapping(d, r, true, nil, resourceKsyunScalingGroupExtra())
+	req, err := SdkRequestAutoMapping(d, r, true, nil, resourceKsyunScalingGroupExtra(d, true))
 	if err != nil {
 		return fmt.Errorf("error on modifying ScalingGroup, %s", err)
 	}
+
+	err = resourceKsyunScalingGroupReqModify(&req, true)
+	if err != nil {
+		return fmt.Errorf("error on modifying ScalingGroup, %s", err)
+	}
+
+	// distinguish modify lb info or other info
+	reqLb := make(map[string]interface{})
+	reqLb["ScalingGroupId"] = d.Id()
+	for k, v := range req {
+		if strings.HasPrefix(k, "Slb.") {
+			reqLb[k] = v
+			delete(req, k)
+		}
+	}
+	action = "ModifyScalingLoadBalancers"
+	logger.Debug(logger.ReqFormat, action, reqLb)
+	_, err = conn.ModifyScalingLoadBalancers(&reqLb)
+	if err != nil {
+		return fmt.Errorf("error on modifying ScalingGroup, %s", err)
+	}
+
 	if len(req) > 0 {
 		req1 := make(map[string]interface{})
 		req1["ScalingGroupId"] = d.Id()
 		if v, ok := req["Status"]; ok {
 			if v == "Active" {
+				action = "EnableScalingGroup"
+				logger.Debug(logger.ReqFormat, action, req)
 				_, err = conn.EnableScalingGroup(&req1)
 				if err != nil {
 					return fmt.Errorf("error on modifying ScalingGroup, %s", err)
 				}
 			} else {
+				action = "DisableScalingGroup"
+				logger.Debug(logger.ReqFormat, action, req)
 				_, err = conn.DisableScalingGroup(&req1)
 				if err != nil {
 					return fmt.Errorf("error on modifying ScalingGroup, %s", err)
@@ -261,7 +330,7 @@ func resourceKsyunScalingGroupUpdate(d *schema.ResourceData, meta interface{}) e
 		}
 		if len(req) > 0 {
 			req["ScalingGroupId"] = d.Id()
-			action := "ModifyScalingGroup"
+			action = "ModifyScalingGroup"
 			logger.Debug(logger.ReqFormat, action, req)
 			_, err = conn.ModifyScalingGroup(&req)
 			if err != nil {
@@ -300,20 +369,29 @@ func resourceKsyunScalingGroupDelete(d *schema.ResourceData, meta interface{}) e
 	client := meta.(*KsyunClient)
 	conn := client.kecconn
 	req := make(map[string]interface{})
-	req["ScalingGroupId.1"] = d.Id()
 	action := "DeleteScalingGroup"
-	otherErrorRetry := 10
+	//before delete need set DesiredCapacity=0 to release instance
+	req["ScalingGroupId"] = d.Id()
+	req["DesiredCapacity"] = 0
+	req["MinSize"] = 0
+	_, err := conn.ModifyScalingGroup(&req)
+	if err != nil {
+		return fmt.Errorf("error on deleting ScalingGroup, %s", err)
+	}
+	for k, _ := range req {
+		delete(req, k)
+	}
+	req["ScalingGroupId.1"] = d.Id()
 
-	return resource.Retry(25*time.Minute, func() *resource.RetryError {
+	return resource.Retry(60*time.Minute, func() *resource.RetryError {
 		logger.Debug(logger.ReqFormat, action, req)
-		resp, err1 := conn.DeleteScalingGroup(&req)
-		logger.Debug(logger.AllFormat, action, req, resp, err1)
+		_, err1 := conn.DeleteScalingGroup(&req)
 		if err1 == nil {
 			return nil
-		} else if notFoundError(err1) {
+		} else if notFoundErrorNew(err1) {
 			return nil
 		} else {
-			return OtherErrorProcess(&otherErrorRetry, fmt.Errorf("error on  deleting ScalingGroup %q, %s", d.Id(), err1))
+			return resource.RetryableError(fmt.Errorf("error on  deleting ScalingGroup %q, %s", d.Id(), err1))
 		}
 	})
 

@@ -37,7 +37,7 @@ The following arguments are supported:
 * `nat_type ` - (Required) The Type of Nat.Valid Values:'public'.
 * `nat_ip_number` - (Optional) The Counts of Nat Ip, Default is 1.
 * `band_width` - (Optional) The BandWidth of Nat Ip, Default is 1.
-* `charge_type` - (Optional) The ChargeType of the Nat, Valid Values: 'DailyPaidByTransfer', 'Monthly','Daily', 'Peak', 'PostPaidByAdvanced95Peak' .
+* `charge_type` - (Optional) The ChargeType of the Nat, Valid Values: 'DailyPaidByTransfer','Daily', 'Peak', 'PostPaidByAdvanced95Peak' .
 * `purchase_time` - (Optional) The PurchaseTime of the Nat, in 1-36 ,If charge_type is Monthly this Field is Required.
 
 ## Attributes Reference

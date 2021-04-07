@@ -29,7 +29,7 @@ resource "ksyun_lb_listener_server" "default" {
 The following arguments are supported:
 
 * `listener_id` - (Required) The id of the listener.
-* `real_server_type` - (Required) The type of real server.Valid Values:'Host', 'DirectConnectGateway', 'VpnTunnel'.
+* `real_server_type` - (Required) The type of real server.Valid Values:'host', 'DirectConnectGateway', 'VpnTunnel'.
 * `instance_id` - (Optional) The ID of instance.
 * `real_server_ip` - (Required) The IP of real server.
 * `real_server_port` - (Required) The port of real server.Valid Values:1-65535

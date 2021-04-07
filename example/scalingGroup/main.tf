@@ -16,7 +16,15 @@ resource "ksyun_subnet" "foo" {
   gateway_ip = "10.0.5.1"
   dns1 = "198.18.254.41"
   dns2 = "198.18.254.40"
-  availability_zone = "cn-beijing-6b"
+  availability_zone = "cn-shanghai-2a"
+}
+
+resource "ksyun_subnet" "foo1" {
+  subnet_name = "tf-acc-subnet2"
+  cidr_block = "10.0.6.0/24"
+  subnet_type = "Reserve"
+  vpc_id = "${ksyun_vpc.foo.id}"
+  availability_zone = "cn-shanghai-2a"
 }
 
 resource "ksyun_security_group" "foo" {
@@ -27,17 +35,21 @@ resource "ksyun_security_group" "foo" {
 resource "ksyun_lb" "foo" {
   vpc_id = "${ksyun_vpc.foo.id}"
   load_balancer_name = "tf-acc-lb"
-  type = "public"
+  type = "internal"
+  subnet_id = "${ksyun_subnet.foo1.id}"
   load_balancer_state = "start"
 }
 
 resource "ksyun_lb_listener" "foo" {
   listener_name = "tf-acc-listener",
-  listener_port = "80",
-  listener_protocol = "HTTP",
-  listener_state = "stop",
+  listener_port = "8080",
+  listener_protocol = "TCP",
+  listener_state = "start",
   load_balancer_id = "${ksyun_lb.foo.id}",
   method = "RoundRobin"
+  health_check {
+    health_check_state = "start"
+  }
   session {
     session_state = "stop"
     session_persistence_period = 3600
@@ -68,13 +80,14 @@ resource "ksyun_scaling_group" "foo" {
     "${ksyun_subnet.foo.id}"]
   security_group_id = "${ksyun_security_group.foo.id}"
   scaling_configuration_id = "${ksyun_scaling_configuration.foo.id}"
-  min_size = 0
+  min_size = 1
   max_size = 2
-  desired_capacity = 0
-  status = "UnActive"
-  slb_config_set = {
+  desired_capacity = 1
+  status = "Active"
+  slb_config_set  {
     slb_id = "${ksyun_lb.foo.id}"
     listener_id = "${ksyun_lb_listener.foo.id}"
+    health_check_type = "kec"
     server_port_set = [
       80]
   }

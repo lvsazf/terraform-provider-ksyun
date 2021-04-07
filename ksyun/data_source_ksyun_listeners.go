@@ -76,8 +76,27 @@ func dataSourceKsyunListeners() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"enable_http2": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
+
+						"tls_cipher_policy": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"http_protocol": {
 							Type:     schema.TypeString,
+							Computed: true,
+						},
+
+						"band_width_out": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+
+						"band_width_in": {
+							Type:     schema.TypeInt,
 							Computed: true,
 						},
 
@@ -200,6 +219,7 @@ func dataSourceKsyunListeners() *schema.Resource {
 }
 
 func dataSourceKsyunListenersRead(d *schema.ResourceData, m interface{}) error {
+	var result []map[string]interface{}
 	conn := m.(*KsyunClient).slbconn
 	req := make(map[string]interface{})
 	var Listeners []string
@@ -234,14 +254,28 @@ func dataSourceKsyunListenersRead(d *schema.ResourceData, m interface{}) error {
 		return nil
 	}
 	allListeners = append(allListeners, items...)
-	//	excludes:=[]string{"HealthCheck","RealServer","Session"}
-	datas := GetSubSliceDByRep(allListeners, listenerKeys)
-	dealListenrData(datas)
-	err = dataSourceKscSave(d, "listeners", Listeners, datas)
+	merageResultDirect(&result, allListeners)
+	err = dataSourceKsyunListenersSave(d, result)
 	if err != nil {
 		return fmt.Errorf("error on save Listener list, %s", err)
 	}
 	return nil
+}
+
+func dataSourceKsyunListenersSave(d *schema.ResourceData, result []map[string]interface{}) error {
+	resource := dataSourceKsyunListeners()
+	targetName := "listeners"
+	_, _, err := SdkSliceMapping(d, result, SdkSliceData{
+		IdField: "ListenerId",
+		IdMappingFunc: func(idField string, item map[string]interface{}) string {
+			return item[idField].(string)
+		},
+		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
+			return SdkResponseAutoMapping(resource, targetName, item, nil, nil)
+		},
+		TargetName: targetName,
+	})
+	return err
 }
 
 func dealListenrData(datas []map[string]interface{}) {

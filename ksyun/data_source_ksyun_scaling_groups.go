@@ -105,6 +105,15 @@ func dataSourceKsyunScalingGroups() *schema.Resource {
 							Computed: true,
 						},
 
+						"security_group_id_set": {
+							Type:     schema.TypeSet,
+							Computed: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+							Set: schema.HashString,
+						},
+
 						"status": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -146,6 +155,10 @@ func dataSourceKsyunScalingGroups() *schema.Resource {
 										Type:     schema.TypeInt,
 										Computed: true,
 									},
+									"health_check_type": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
 									"server_port_set": {
 										Type:     schema.TypeSet,
 										Computed: true,
@@ -185,7 +198,7 @@ func dataSourceKsyunScalingGroupsRead(d *schema.ResourceData, meta interface{}) 
 		"vpc_id":                   {},
 	}
 
-	req, err = SdkRequestAutoMapping(d, r, false, only, resourceKsyunScalingGroupExtra())
+	req, err = SdkRequestAutoMapping(d, r, false, only, resourceKsyunScalingGroupExtra(d, false))
 	if err != nil {
 		return fmt.Errorf("error on reading ScalingGroup list, %s", err)
 	}
