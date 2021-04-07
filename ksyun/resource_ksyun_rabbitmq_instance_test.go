@@ -24,6 +24,7 @@ func TestAccKsyunRabbitmqInstance_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRabbitmqInstanceExists("ksyun_rabbitmq_instance.default"),
 				),
+				ImportStateVerify: false,
 			},
 			//{
 			//	Config: testRabbitmqUpdateAccKcsConfig,
