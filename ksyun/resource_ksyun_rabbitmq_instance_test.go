@@ -26,12 +26,12 @@ func TestAccKsyunRabbitmqInstance_basic(t *testing.T) {
 				),
 				ImportStateVerify: false,
 			},
-			//{
-			//	Config: testRabbitmqUpdateAccKcsConfig,
-			//	Check: resource.ComposeTestCheckFunc(
-			//		testAccCheckKcsInstanceExists("ksyun_rabbitmq_instance.default"),
-			//	),
-			//},
+			{
+				Config: testRabbitmqUpdateAccKcsConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckKcsInstanceExists("ksyun_rabbitmq_instance.default"),
+				),
+			},
 		},
 	})
 }
