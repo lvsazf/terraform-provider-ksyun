@@ -148,7 +148,6 @@ func AddProjectInfo(d *schema.ResourceData, req *map[string]interface{}, client 
 	} else if d.HasChange("project_id") && !d.IsNewResource() {
 		(*req)["ProjectId.1"] = fmt.Sprintf("%v", d.Get("project_id"))
 	} else {
-		logger.Debug(logger.ReqFormat, "UpdateInstanceProjectId", "222222222")
 		return GetProjectInfo(req, client)
 	}
 	return nil
