@@ -145,11 +145,10 @@ func SetResourceDataByResp(d *schema.ResourceData, item interface{}, keys map[st
 func AddProjectInfo(d *schema.ResourceData, req *map[string]interface{}, client *KsyunClient) error {
 	if pj, ok := d.GetOk("project_id"); ok {
 		(*req)["ProjectId.1"] = fmt.Sprintf("%v", pj)
+	} else if d.HasChange("project_id") && !d.IsNewResource() {
+		(*req)["ProjectId.1"] = fmt.Sprintf("%v", d.Get("project_id"))
 	} else {
-		projectErr := GetProjectInfo(req, client)
-		if projectErr != nil {
-			return projectErr
-		}
+		return GetProjectInfo(req, client)
 	}
 	return nil
 }
