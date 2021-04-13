@@ -1,0 +1,363 @@
+2021/03/24 19:58:34 [INFO] Terraform version: 0.14.8  
+2021/03/24 19:58:34 [INFO] Go runtime version: go1.15.6
+2021/03/24 19:58:34 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init"}
+2021/03/24 19:58:34 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/24 19:58:34 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/24 19:58:34 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/24 19:58:34 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/24 19:58:34 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/24 19:58:34 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/24 19:58:34 [INFO] CLI command args: []string{"init"}
+2021/03/24 19:58:34 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/24 19:58:34 [DEBUG] New state was assigned lineage "f6780cc4-e5bb-26fc-7949-ac557119c949"
+2021/03/24 19:58:34 [DEBUG] checking for provisioner in "."
+2021/03/24 19:58:34 [DEBUG] checking for provisioner in "/usr/local/bin"
+2021/03/24 19:58:34 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/24 19:58:34 [DEBUG] Service discovery for registry.terraform.io at https://registry.terraform.io/.well-known/terraform.json
+2021/03/24 19:58:36 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/24 19:58:37 [DEBUG] GET https://registry.terraform.io/v1/providers/hashicorp/ksyun/versions
+2021/03/24 19:58:38 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/24 19:58:38 [DEBUG] GET https://registry.terraform.io/v1/providers/-/ksyun/versions
+2021/03/25 10:52:36 [INFO] Terraform version: 0.14.8  
+2021/03/25 10:52:36 [INFO] Go runtime version: go1.15.6
+2021/03/25 10:52:36 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init"}
+2021/03/25 10:52:36 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 10:52:36 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 10:52:36 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 10:52:36 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 10:52:36 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 10:52:36 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 10:52:36 [INFO] CLI command args: []string{"init"}
+2021/03/25 10:52:36 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 10:52:36 [DEBUG] New state was assigned lineage "21cff2e1-c896-d03f-6ccc-bbb7c1f2a969"
+2021/03/25 10:52:36 [DEBUG] checking for provisioner in "."
+2021/03/25 10:52:36 [DEBUG] checking for provisioner in "/usr/local/bin"
+2021/03/25 10:52:36 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 10:52:36 [DEBUG] Service discovery for registry.terraform.io at https://registry.terraform.io/.well-known/terraform.json
+2021/03/25 10:52:38 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 10:52:38 [DEBUG] GET https://registry.terraform.io/v1/providers/hashicorp/ksyun/versions
+2021/03/25 10:52:39 [DEBUG] GET https://registry.terraform.io/v1/providers/-/ksyun/versions
+2021/03/25 10:52:39 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 11:05:49 [INFO] Terraform version: 0.14.8  
+2021/03/25 11:05:49 [INFO] Go runtime version: go1.15.6
+2021/03/25 11:05:49 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init"}
+2021/03/25 11:05:49 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 11:05:49 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 11:05:49 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 11:05:49 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 11:05:49 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 11:05:49 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 11:05:49 [INFO] CLI command args: []string{"init"}
+2021/03/25 11:05:49 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 11:05:49 [DEBUG] New state was assigned lineage "1c2510fe-8c7f-5778-98d7-9f61dd629368"
+2021/03/25 11:05:49 [DEBUG] checking for provisioner in "."
+2021/03/25 11:05:49 [DEBUG] checking for provisioner in "/usr/local/bin"
+2021/03/25 11:05:49 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 11:05:49 [DEBUG] Service discovery for registry.terraform.io at https://registry.terraform.io/.well-known/terraform.json
+2021/03/25 11:05:51 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 11:05:51 [DEBUG] GET https://registry.terraform.io/v1/providers/hashicorp/ksyun/versions
+2021/03/25 11:05:52 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+2021/03/25 11:05:52 [DEBUG] GET https://registry.terraform.io/v1/providers/-/ksyun/versions
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 11:16:44 [INFO] Terraform version: 0.14.8  
+2021/03/25 11:16:44 [INFO] Go runtime version: go1.15.6
+2021/03/25 11:16:44 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init", "-plugin-dir", "/Users/lvsazf/.terraform.d/plugin"}
+2021/03/25 11:16:44 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 11:16:44 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 11:16:44 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 11:16:44 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 11:16:44 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 11:16:44 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 11:16:44 [INFO] CLI command args: []string{"init", "-plugin-dir", "/Users/lvsazf/.terraform.d/plugin"}
+2021/03/25 11:16:44 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 11:16:44 [DEBUG] New state was assigned lineage "c292a5d3-692c-7def-7ad9-337091e47f06"
+2021/03/25 11:16:44 [DEBUG] checking for provisioner in "/Users/lvsazf/.terraform.d/plugin"
+2021/03/25 11:16:44 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 11:16:44 [DEBUG] init: overriding provider plugin search paths
+2021/03/25 11:16:44 [DEBUG] will search for provider plugins in [/Users/lvsazf/.terraform.d/plugin]
+2021/03/25 11:16:51 [INFO] Terraform version: 0.14.8  
+2021/03/25 11:16:51 [INFO] Go runtime version: go1.15.6
+2021/03/25 11:16:51 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin"}
+2021/03/25 11:16:51 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 11:16:51 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 11:16:51 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 11:16:51 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 11:16:51 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 11:16:51 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 11:16:51 [INFO] CLI command args: []string{"init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin"}
+2021/03/25 11:16:51 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 11:16:51 [DEBUG] New state was assigned lineage "08674d18-e5a4-8fd6-cc1c-a437001899ec"
+2021/03/25 11:16:51 [DEBUG] checking for provisioner in "/Users/lvsazf/.terraform.d/plugin"
+2021/03/25 11:16:51 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 11:16:51 [DEBUG] init: overriding provider plugin search paths
+2021/03/25 11:16:51 [DEBUG] will search for provider plugins in [/Users/lvsazf/.terraform.d/plugin]
+2021/03/25 11:25:38 [INFO] Terraform version: 0.14.8  
+2021/03/25 11:25:38 [INFO] Go runtime version: go1.15.6
+2021/03/25 11:25:38 [INFO] CLI args: []string{"/usr/local/bin/terraform", "plan"}
+2021/03/25 11:25:38 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 11:25:38 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 11:25:38 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 11:25:38 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 11:25:38 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 11:25:38 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 11:25:38 [INFO] CLI command args: []string{"plan"}
+2021/03/25 11:25:38 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 11:25:38 [DEBUG] New state was assigned lineage "5a176c8a-ab2f-0473-b16e-e8b19bdae500"
+2021/03/25 11:25:38 [DEBUG] checking for provisioner in "/Users/lvsazf/.terraform.d/plugin"
+2021/03/25 11:25:38 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 11:25:38 [INFO] backend/local: starting Plan operation
+2021/03/25 11:25:45 [INFO] Terraform version: 0.14.8  
+2021/03/25 11:25:45 [INFO] Go runtime version: go1.15.6
+2021/03/25 11:25:45 [INFO] CLI args: []string{"/usr/local/bin/terraform", "plan"}
+2021/03/25 11:25:45 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 11:25:45 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 11:25:45 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 11:25:45 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 11:25:45 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 11:25:45 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 11:25:45 [INFO] CLI command args: []string{"plan"}
+2021/03/25 11:25:45 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 11:25:45 [DEBUG] New state was assigned lineage "286ab3cd-8cbe-8906-c9d4-a585136cca1c"
+2021/03/25 11:25:45 [DEBUG] checking for provisioner in "/Users/lvsazf/.terraform.d/plugin"
+2021/03/25 11:25:45 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 11:25:45 [INFO] backend/local: starting Plan operation
+2021/03/25 11:25:59 [INFO] Terraform version: 0.14.8  
+2021/03/25 11:25:59 [INFO] Go runtime version: go1.15.6
+2021/03/25 11:25:59 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init", "--help"}
+2021/03/25 11:25:59 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 11:25:59 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 11:25:59 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 11:25:59 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 11:25:59 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 11:25:59 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 11:25:59 [INFO] CLI command args: []string{"init", "--help"}
+2021/03/25 11:27:05 [INFO] Terraform version: 0.14.8  
+2021/03/25 11:27:05 [INFO] Go runtime version: go1.15.6
+2021/03/25 11:27:05 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin"}
+2021/03/25 11:27:05 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 11:27:05 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 11:27:05 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 11:27:05 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 11:27:05 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 11:27:05 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 11:27:05 [INFO] CLI command args: []string{"init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin"}
+2021/03/25 11:27:05 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 11:27:05 [DEBUG] New state was assigned lineage "1eeb4d1f-a4a0-9ff0-c742-308a4c0f4823"
+2021/03/25 11:27:05 [DEBUG] checking for provisioner in "/Users/lvsazf/.terraform.d/plugin"
+2021/03/25 11:27:05 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 11:27:05 [DEBUG] init: overriding provider plugin search paths
+2021/03/25 11:27:05 [DEBUG] will search for provider plugins in [/Users/lvsazf/.terraform.d/plugin]
+2021/03/25 11:29:03 [INFO] Terraform version: 0.14.8  
+2021/03/25 11:29:03 [INFO] Go runtime version: go1.15.6
+2021/03/25 11:29:03 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin/"}
+2021/03/25 11:29:03 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 11:29:03 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 11:29:03 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 11:29:03 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 11:29:03 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 11:29:03 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 11:29:03 [INFO] CLI command args: []string{"init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin/"}
+2021/03/25 11:29:03 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 11:29:03 [DEBUG] New state was assigned lineage "b4bc270c-3944-231f-6527-af2408d00f7f"
+2021/03/25 11:29:03 [DEBUG] checking for provisioner in "/Users/lvsazf/.terraform.d/plugin/"
+2021/03/25 11:29:03 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 11:29:03 [DEBUG] init: overriding provider plugin search paths
+2021/03/25 11:29:03 [DEBUG] will search for provider plugins in [/Users/lvsazf/.terraform.d/plugin/]
+2021/03/25 11:29:13 [INFO] Terraform version: 0.14.8  
+2021/03/25 11:29:13 [INFO] Go runtime version: go1.15.6
+2021/03/25 11:29:13 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin/"}
+2021/03/25 11:29:13 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 11:29:13 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 11:29:13 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 11:29:13 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 11:29:13 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 11:29:13 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 11:29:13 [INFO] CLI command args: []string{"init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin/"}
+2021/03/25 11:29:13 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 11:29:13 [DEBUG] New state was assigned lineage "8ace0980-c098-84ab-09a0-542aa1918082"
+2021/03/25 11:29:13 [DEBUG] checking for provisioner in "/Users/lvsazf/.terraform.d/plugin/"
+2021/03/25 11:29:13 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 11:29:13 [DEBUG] init: overriding provider plugin search paths
+2021/03/25 11:29:13 [DEBUG] will search for provider plugins in [/Users/lvsazf/.terraform.d/plugin/]
+2021/03/25 15:45:55 [INFO] Terraform version: 0.14.8  
+2021/03/25 15:45:55 [INFO] Go runtime version: go1.15.6
+2021/03/25 15:45:55 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init"}
+2021/03/25 15:45:55 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 15:45:55 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 15:45:55 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 15:45:55 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 15:45:55 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 15:45:55 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 15:45:55 [INFO] CLI command args: []string{"init"}
+2021/03/25 15:45:55 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 15:45:55 [DEBUG] New state was assigned lineage "7df4755e-fd8c-b97e-6814-0bf0d23da663"
+2021/03/25 15:45:55 [DEBUG] checking for provisioner in "."
+2021/03/25 15:45:55 [DEBUG] checking for provisioner in "/usr/local/bin"
+2021/03/25 15:45:55 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 15:45:55 [DEBUG] Service discovery for registry.terraform.io at https://registry.terraform.io/.well-known/terraform.json
+2021/03/25 15:45:57 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 15:45:57 [DEBUG] GET https://registry.terraform.io/v1/providers/hashicorp/ksyun/versions
+2021/03/25 15:45:58 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 15:45:58 [DEBUG] GET https://registry.terraform.io/v1/providers/-/ksyun/versions
+2021/03/25 15:46:16 [INFO] Terraform version: 0.14.8  
+2021/03/25 15:46:16 [INFO] Go runtime version: go1.15.6
+2021/03/25 15:46:16 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin"}
+2021/03/25 15:46:16 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 15:46:16 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 15:46:16 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 15:46:16 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 15:46:16 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 15:46:16 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 15:46:16 [INFO] CLI command args: []string{"init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin"}
+2021/03/25 15:46:16 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 15:46:16 [DEBUG] New state was assigned lineage "1feb131c-c859-65cc-b578-411cfd39d6e9"
+2021/03/25 15:46:16 [DEBUG] checking for provisioner in "/Users/lvsazf/.terraform.d/plugin"
+2021/03/25 15:46:16 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 15:46:16 [DEBUG] init: overriding provider plugin search paths
+2021/03/25 15:46:16 [DEBUG] will search for provider plugins in [/Users/lvsazf/.terraform.d/plugin]
+2021/03/25 15:46:59 [INFO] Terraform version: 0.14.8  
+2021/03/25 15:46:59 [INFO] Go runtime version: go1.15.6
+2021/03/25 15:46:59 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin"}
+2021/03/25 15:46:59 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 15:46:59 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 15:46:59 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 15:46:59 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 15:46:59 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 15:46:59 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 15:46:59 [INFO] CLI command args: []string{"init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin"}
+2021/03/25 15:46:59 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 15:46:59 [DEBUG] New state was assigned lineage "16c17c5c-829c-c990-0ca4-9c657ff19037"
+2021/03/25 15:46:59 [DEBUG] checking for provisioner in "/Users/lvsazf/.terraform.d/plugin"
+2021/03/25 15:46:59 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 15:46:59 [DEBUG] init: overriding provider plugin search paths
+2021/03/25 15:46:59 [DEBUG] will search for provider plugins in [/Users/lvsazf/.terraform.d/plugin]
+2021/03/25 15:47:09 [INFO] Terraform version: 0.14.8  
+2021/03/25 15:47:09 [INFO] Go runtime version: go1.15.6
+2021/03/25 15:47:09 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin"}
+2021/03/25 15:47:09 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 15:47:09 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 15:47:09 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 15:47:09 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 15:47:09 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 15:47:09 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 15:47:09 [INFO] CLI command args: []string{"init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin"}
+2021/03/25 15:47:09 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 15:47:09 [DEBUG] New state was assigned lineage "715c1698-ef8e-0a80-ec04-0a1a10341ee2"
+2021/03/25 15:47:09 [DEBUG] checking for provisioner in "/Users/lvsazf/.terraform.d/plugin"
+2021/03/25 15:47:09 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 15:47:09 [DEBUG] init: overriding provider plugin search paths
+2021/03/25 15:47:09 [DEBUG] will search for provider plugins in [/Users/lvsazf/.terraform.d/plugin]
+2021/03/25 15:47:46 [INFO] Terraform version: 0.14.8  
+2021/03/25 15:47:46 [INFO] Go runtime version: go1.15.6
+2021/03/25 15:47:46 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin/hashicorp"}
+2021/03/25 15:47:46 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 15:47:46 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 15:47:46 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 15:47:46 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 15:47:46 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 15:47:46 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 15:47:46 [INFO] CLI command args: []string{"init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin/hashicorp"}
+2021/03/25 15:47:46 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 15:47:46 [DEBUG] New state was assigned lineage "7f985b99-4bfe-cffb-ddcc-61b646fed338"
+2021/03/25 15:47:46 [DEBUG] checking for provisioner in "/Users/lvsazf/.terraform.d/plugin/hashicorp"
+2021/03/25 15:47:46 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 15:47:46 [DEBUG] init: overriding provider plugin search paths
+2021/03/25 15:47:46 [DEBUG] will search for provider plugins in [/Users/lvsazf/.terraform.d/plugin/hashicorp]
+2021/03/25 15:48:11 [INFO] Terraform version: 0.14.8  
+2021/03/25 15:48:11 [INFO] Go runtime version: go1.15.6
+2021/03/25 15:48:11 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin/hashicorp"}
+2021/03/25 15:48:11 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 15:48:11 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 15:48:11 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 15:48:11 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 15:48:11 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 15:48:11 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 15:48:11 [INFO] CLI command args: []string{"init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin/hashicorp"}
+2021/03/25 15:48:11 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 15:48:11 [DEBUG] New state was assigned lineage "adb9c472-05ab-247c-8583-cf5d83b34000"
+2021/03/25 15:48:11 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 15:48:11 [DEBUG] init: overriding provider plugin search paths
+2021/03/25 15:48:11 [DEBUG] will search for provider plugins in [/Users/lvsazf/.terraform.d/plugin/hashicorp]
+2021/03/25 15:48:15 [INFO] Terraform version: 0.14.8  
+2021/03/25 15:48:15 [INFO] Go runtime version: go1.15.6
+2021/03/25 15:48:15 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin/"}
+2021/03/25 15:48:15 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 15:48:15 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 15:48:15 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 15:48:15 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 15:48:15 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 15:48:15 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 15:48:15 [INFO] CLI command args: []string{"init", "-plugin-dir=/Users/lvsazf/.terraform.d/plugin/"}
+2021/03/25 15:48:15 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 15:48:15 [DEBUG] New state was assigned lineage "c7baac4c-2f36-24a7-2939-a09be53b0b8a"
+2021/03/25 15:48:15 [DEBUG] checking for provisioner in "/Users/lvsazf/.terraform.d/plugin/"
+2021/03/25 15:48:15 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 15:48:15 [DEBUG] init: overriding provider plugin search paths
+2021/03/25 15:48:15 [DEBUG] will search for provider plugins in [/Users/lvsazf/.terraform.d/plugin/]
+2021/03/25 15:48:18 [INFO] Terraform version: 0.14.8  
+2021/03/25 15:48:18 [INFO] Go runtime version: go1.15.6
+2021/03/25 15:48:18 [INFO] CLI args: []string{"/usr/local/bin/terraform", "init", "-plugin-dir=/Users/lvsazf/.terraform.d/"}
+2021/03/25 15:48:18 [DEBUG] Attempting to open CLI config file: /Users/lvsazf/.terraformrc
+2021/03/25 15:48:18 [DEBUG] File doesn't exist, but doesn't need to. Ignoring.
+2021/03/25 15:48:18 [DEBUG] ignoring non-existing provider search directory terraform.d/plugins
+2021/03/25 15:48:18 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/.terraform.d/plugins
+2021/03/25 15:48:18 [DEBUG] ignoring non-existing provider search directory /Users/lvsazf/Library/Application Support/io.terraform/plugins
+2021/03/25 15:48:18 [DEBUG] ignoring non-existing provider search directory /Library/Application Support/io.terraform/plugins
+2021/03/25 15:48:18 [INFO] CLI command args: []string{"init", "-plugin-dir=/Users/lvsazf/.terraform.d/"}
+2021/03/25 15:48:18 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
+  Use TF_LOG=TRACE to see Terraform's internal logs.
+  ----
+2021/03/25 15:48:18 [DEBUG] New state was assigned lineage "8abf723d-e711-4deb-9271-a3f4954462fe"
+2021/03/25 15:48:18 [DEBUG] checking for provisioner in "/Users/lvsazf/.terraform.d/"
+2021/03/25 15:48:18 [INFO] Failed to read plugin lock file .terraform/plugins/darwin_amd64/lock.json: open .terraform/plugins/darwin_amd64/lock.json: no such file or directory
+2021/03/25 15:48:18 [DEBUG] init: overriding provider plugin search paths
+2021/03/25 15:48:18 [DEBUG] will search for provider plugins in [/Users/lvsazf/.terraform.d/]
