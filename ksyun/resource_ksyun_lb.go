@@ -163,8 +163,9 @@ func resourceKsyunLbRead(d *schema.ResourceData, m interface{}) error {
 	slbconn := m.(*KsyunClient).slbconn
 	req := make(map[string]interface{})
 	req["LoadBalancerId.1"] = d.Id()
-	if pd, ok := d.GetOk("project_id"); ok {
-		req["ProjectId.1"] = fmt.Sprintf("%v", pd)
+	err := AddProjectInfo(d, &req, m.(*KsyunClient))
+	if err != nil {
+		return fmt.Errorf("error on DescribeLoadBalancers  %q, %s", d.Id(), err)
 	}
 	action := "DescribeLoadBalancers"
 	logger.Debug(logger.ReqFormat, action, req)
@@ -215,6 +216,13 @@ func resourceKsyunLbUpdate(d *schema.ResourceData, m interface{}) error {
 	}
 	// Enable partial attribute modification
 	d.Partial(true)
+	if d.HasChange("project_id") {
+		req["ProjectId"] = fmt.Sprintf("%v", d.Get("project_id"))
+		err := ModifyProjectInstance(d.Id(), &req, m)
+		if err != nil {
+			return fmt.Errorf("error on updating lb, %s", err)
+		}
+	}
 	// Whether the representative has any modifications
 	attributeUpdate := false
 	if d.HasChange("load_balancer_name") {
