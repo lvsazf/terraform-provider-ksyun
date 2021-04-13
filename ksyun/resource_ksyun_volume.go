@@ -44,6 +44,7 @@ func resourceKsyunVolume() *schema.Resource {
 			},
 			"charge_type": {
 				Type:     schema.TypeString,
+				ForceNew: true,
 				Required: true,
 			},
 			"availability_zone": {

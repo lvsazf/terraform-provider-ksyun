@@ -649,3 +649,19 @@ func OtherErrorProcess(remain *int, error error) *resource.RetryError {
 		return resource.NonRetryableError(error)
 	}
 }
+
+func ModifyProjectInstance(resourceId string, param *map[string]interface{}, meta interface{}) error {
+	if projectId, ok := (*param)["ProjectId"]; ok {
+		req := make(map[string]interface{})
+		req["InstanceId"] = resourceId
+		req["ProjectId"] = projectId
+		client := meta.(*KsyunClient)
+		conn := client.iamconn
+		_, err := conn.UpdateInstanceProjectId(&req)
+		if err != nil {
+			return err
+		}
+		delete(*param, "ProjectId")
+	}
+	return nil
+}

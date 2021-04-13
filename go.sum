@@ -26,6 +26,10 @@ github.com/KscSDK/ksc-sdk-go v0.1.17 h1:B8FaL3/d/hk8q8IfCmnLPQV5qJE9xOx5jo4tvmyT
 github.com/KscSDK/ksc-sdk-go v0.1.17/go.mod h1:isHlJZi429ff5JLemSc10h7nznNgzJAY4MmNM8u7SBo=
 github.com/KscSDK/ksc-sdk-go v0.1.18 h1:YGWSQB2a9cEc4uPLOh1Kt3gvpY9aQ9mvZaRIRIEURqc=
 github.com/KscSDK/ksc-sdk-go v0.1.18/go.mod h1:isHlJZi429ff5JLemSc10h7nznNgzJAY4MmNM8u7SBo=
+github.com/KscSDK/ksc-sdk-go v0.1.19 h1:Tp1DgTYFTOEMroWUko4wD6sCuM557buhLqIyCO2d0IU=
+github.com/KscSDK/ksc-sdk-go v0.1.19/go.mod h1:isHlJZi429ff5JLemSc10h7nznNgzJAY4MmNM8u7SBo=
+github.com/KscSDK/ksc-sdk-go v0.1.20 h1:fZo8PKMLrqffRRUG+xd2XR0SsJ7TiOpc9pXiAGVZ3oM=
+github.com/KscSDK/ksc-sdk-go v0.1.20/go.mod h1:isHlJZi429ff5JLemSc10h7nznNgzJAY4MmNM8u7SBo=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/OpenPeeDeeP/depguard v1.0.1 h1:VlW4R6jmBIv3/u1JNlawEvJMM4J+dPORPaZasQee8Us=
 github.com/OpenPeeDeeP/depguard v1.0.1/go.mod h1:xsIw86fROiiwelg+jB2uM9PiKihMMmUx/1V+TNhjQvM=
