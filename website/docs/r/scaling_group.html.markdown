@@ -36,9 +36,9 @@ The following arguments are supported:
 * `scaling_group_name` - (Optional) The Name of the desired ScalingGroup.
 * `scaling_configuration_id` - (Required) The Scaling Configuration ID of the desired ScalingGroup set to.
 * `scaling_configuration_name` - (Optional) The Scaling Configuration Name of the desired ScalingGroup set to.
-* `min_size` - (Optional) The Min KEC instance size of the desired ScalingGroup set to.Valid Value 0-10.
-* `max_size` - (Optional) The Min KEC instance size of the desired ScalingGroup set to.Valid Value 0-10.
-* `desired_capacity` (Optional) - The Desire Capacity KEC instance count of the desired ScalingGroup set to.Valid Value 0-10.
+* `min_size` - (Optional) The Min KEC instance size of the desired ScalingGroup set to.Valid Value 0-1000.
+* `max_size` - (Optional) The Min KEC instance size of the desired ScalingGroup set to.Valid Value 0-1000.
+* `desired_capacity` (Optional) - The Desire Capacity KEC instance count of the desired ScalingGroup set to.Valid Value 0-1000.
 * `instance_num` - (Optional) The KEC instance Number of the desired ScalingGroup set to.Valid Value 0-10.
 * `remove_policy` - (Optional) The KEC instance remove policy of the desired ScalingGroup set to.Valid Values:'RemoveOldestInstance', 'RemoveNewestInstance'.
 * `security_group_id_set` - (Required) The Security Group ID List of the desired ScalingGroup set to.  
