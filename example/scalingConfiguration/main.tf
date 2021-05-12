@@ -19,6 +19,8 @@ resource "ksyun_scaling_configuration" "foo" {
     disk_size = 100
     delete_with_instance = false
   }
+
+  system_disk_size = 60
   address_band_width = 2
 
 }
