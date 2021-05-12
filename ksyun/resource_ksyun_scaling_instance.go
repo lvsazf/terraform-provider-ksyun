@@ -73,10 +73,10 @@ func resourceKsyunScalingInstanceCreate(d *schema.ResourceData, meta interface{}
 	var only map[string]SdkReqTransform
 	only = map[string]SdkReqTransform{
 		"scaling_group_id":    {},
-		"scaling_instance_id": {},
+		"scaling_instance_id": {Type: TransformSingleN},
 	}
 
-	req, err := SdkRequestAutoMapping(d, r, false, only, resourceKsyunScalingInstanceExtra())
+	req, err := SdkRequestAutoMapping(d, r, false, only, nil)
 	if err != nil {
 		return fmt.Errorf("error on creating ScalingInstance, %s", err)
 	}
@@ -111,9 +111,11 @@ func resourceKsyunScalingInstanceUpdate(d *schema.ResourceData, meta interface{}
 	var only map[string]SdkReqTransform
 	only = map[string]SdkReqTransform{
 		"protected_from_detach": {},
+		"scaling_group_id":      {forceUpdateParam: true},
+		"scaling_instance_id":   {forceUpdateParam: true, Type: TransformSingleN},
 	}
 
-	req, err := SdkRequestAutoMapping(d, r, false, only, resourceKsyunScalingInstanceExtra())
+	req, err := SdkRequestAutoMapping(d, r, true, only, nil)
 	if err != nil {
 		return fmt.Errorf("error on updating ScalingInstance, %s", err)
 	}
@@ -122,9 +124,6 @@ func resourceKsyunScalingInstanceUpdate(d *schema.ResourceData, meta interface{}
 	if _, ok := req["ProtectedFromDetach"]; !ok {
 		req["ProtectedFromDetach"] = 0
 	}
-
-	req["ScalingGroupId"] = strings.Split(d.Id(), ":")[1]
-	req["ScalingInstanceId.1"] = strings.Split(d.Id(), ":")[0]
 
 	action := "SetKvmProtectedDetach"
 	logger.Debug(logger.ReqFormat, action, req)

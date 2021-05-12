@@ -208,7 +208,9 @@ func resourceKsyunScalingConfigurationExtra(d *schema.ResourceData, forceGet boo
 	var r map[string]SdkReqTransform
 
 	r = map[string]SdkReqTransform{
-		"key_id": {Type: TransformWithN},
+		"key_id":           {Type: TransformWithN},
+		"system_disk_type": {mapping: "SystemDisk.DiskType"},
+		"system_disk_size": {mapping: "SystemDisk.DiskSize"},
 		"data_disks": {mappings: map[string]string{
 			"data_disks": "DataDisk",
 			"disk_size":  "Size",
