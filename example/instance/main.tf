@@ -15,6 +15,10 @@ resource "ksyun_instance" "default" {
     disk_type = "SSD3.0"
     disk_size = 100
   }
+  data_disks {
+    disk_type = "SSD3.0"
+    disk_size = 200
+  }
   data_disk_gb=0
   #only support part type
   subnet_id="55dcbce0-d052-4556-aaf1-b17972d3f5e2"

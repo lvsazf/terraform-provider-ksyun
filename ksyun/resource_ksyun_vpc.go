@@ -8,12 +8,12 @@ import (
 	"time"
 )
 
-func resourceKsyunVPC() *schema.Resource {
+func resourceKsyunVpc() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceKsyunVPCCreate,
-		Update: resourceKsyunVPCUpdate,
-		Read:   resourceKsyunVPCRead,
-		Delete: resourceKsyunVPCDelete,
+		Create: resourceKsyunVpcCreate,
+		Update: resourceKsyunVpcUpdate,
+		Read:   resourceKsyunVpcRead,
+		Delete: resourceKsyunVpcDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -28,6 +28,7 @@ func resourceKsyunVPC() *schema.Resource {
 			"cidr_block": {
 				Type:         schema.TypeString,
 				Optional:     true,
+				ForceNew:     true,
 				ValidateFunc: validateCIDRNetworkAddress,
 			},
 
@@ -45,49 +46,44 @@ func resourceKsyunVPC() *schema.Resource {
 	}
 }
 
-func resourceKsyunVPCCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceKsyunVpcCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*KsyunClient)
 	conn := client.vpcconn
+	r := resourceKsyunVpc()
 
 	var resp *map[string]interface{}
 	var err error
-	createVpc := make(map[string]interface{})
 
-	creates := []string{
-		"vpc_name",
-		"cidr_block",
-		"is_default",
+	req, err := SdkRequestAutoMapping(d, r, false, nil, nil)
+	if err != nil {
+		return fmt.Errorf("error on creating vpc, %s", err)
 	}
-	for _, v := range creates {
-		if v1, ok := d.GetOk(v); ok {
-			vv := Downline2Hump(v)
-			createVpc[vv] = fmt.Sprintf("%v", v1)
-		}
-	}
+
 	action := "CreateVpc"
-	logger.Debug(logger.ReqFormat, action, createVpc)
-	resp, err = conn.CreateVpc(&createVpc)
-	logger.Debug(logger.AllFormat, action, createVpc, *resp, err)
+	logger.Debug(logger.ReqFormat, action, req)
+	resp, err = conn.CreateVpc(&req)
 	if err != nil {
 		return fmt.Errorf("error on creating vpc, %s", err)
 	}
 	if resp != nil {
-		vpc := (*resp)["Vpc"].(map[string]interface{})
-		d.SetId(vpc["VpcId"].(string))
+		vpcId, err := getSdkValue("Vpc.VpcId", *resp)
+		if err != nil {
+			return fmt.Errorf("error on creating vpc, %s", err)
+		}
+		d.SetId(vpcId.(string))
 	}
-	return resourceKsyunVPCRead(d, meta)
+	return resourceKsyunVpcRead(d, meta)
 }
 
-func resourceKsyunVPCRead(d *schema.ResourceData, meta interface{}) error {
+func resourceKsyunVpcRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*KsyunClient)
 	conn := client.vpcconn
 
-	readVpc := make(map[string]interface{})
-	readVpc["VpcId.1"] = d.Id()
+	req := make(map[string]interface{})
+	req["VpcId.1"] = d.Id()
 	action := "DescribeVpcs"
-	logger.Debug(logger.ReqFormat, action, readVpc)
-	resp, err := conn.DescribeVpcs(&readVpc)
-	logger.Debug(logger.AllFormat, action, readVpc, *resp, err)
+	logger.Debug(logger.ReqFormat, action, req)
+	resp, err := conn.DescribeVpcs(&req)
 	if err != nil {
 		return fmt.Errorf("error on reading vpc %q, %s", d.Id(), err)
 	}
@@ -97,73 +93,51 @@ func resourceKsyunVPCRead(d *schema.ResourceData, meta interface{}) error {
 			d.SetId("")
 			return nil
 		}
-		SetDByResp(d, items[0], vpcKeys, map[string]bool{})
+		SdkResponseAutoResourceData(d, resourceKsyunEip(), items[0], nil)
 	}
 	return nil
 }
 
-func resourceKsyunVPCUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceKsyunVpcUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*KsyunClient)
 	conn := client.vpcconn
-	attributeUpdate := false
-	d.Partial(true)
-	modifyVpc := make(map[string]interface{})
-	modifyVpc["VpcId"] = d.Id()
+	r := resourceKsyunVpc()
 
-	if d.HasChange("vpc_name") && !d.IsNewResource() {
-		modifyVpc["VpcName"] = fmt.Sprintf("%v", d.Get("vpc_name"))
-		attributeUpdate = true
+	var err error
+
+	req, err := SdkRequestAutoMapping(d, r, true, nil, nil)
+	if err != nil {
+		return fmt.Errorf("error on updating Vpc, %s", err)
 	}
-	if attributeUpdate {
+	if len(req) > 0 {
+		req["VpcId"] = d.Id()
 		action := "ModifyVpc"
-		logger.Debug(logger.ReqFormat, action, modifyVpc)
-		resp, err := conn.ModifyVpc(&modifyVpc)
-		logger.Debug(logger.AllFormat, action, modifyVpc, *resp, err)
+		logger.Debug(logger.ReqFormat, action, req)
+		_, err = conn.ModifyVpc(&req)
 		if err != nil {
-			return fmt.Errorf("error on updating vpc, %s", err)
+			return fmt.Errorf("error on modifying Vpc, %s", err)
 		}
-		d.SetPartial("vpc_name")
 	}
-	d.Partial(false)
-	return resourceKsyunVPCRead(d, meta)
+	return resourceKsyunVpcRead(d, meta)
 }
 
-func resourceKsyunVPCDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceKsyunVpcDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*KsyunClient)
 	conn := client.vpcconn
-	deleteVpc := make(map[string]interface{})
-	deleteVpc["VpcId"] = d.Id()
+	req := make(map[string]interface{})
+	req["VpcId"] = d.Id()
 	action := "DeleteVpc"
-	return resource.Retry(30*time.Minute, func() *resource.RetryError {
-		logger.Debug(logger.ReqFormat, action, deleteVpc)
-		resp, err1 := conn.DeleteVpc(&deleteVpc)
-		logger.Debug(logger.AllFormat, action, deleteVpc, *resp, err1)
-		if err1 == nil || (err1 != nil && notFoundError(err1)) {
+
+	return resource.Retry(25*time.Minute, func() *resource.RetryError {
+		logger.Debug(logger.ReqFormat, action, req)
+		resp, err1 := conn.DeleteVpc(&req)
+		logger.Debug(logger.AllFormat, action, req, resp, err1)
+		if err1 == nil {
 			return nil
-		}
-		if err1 != nil && inUseError(err1) {
-			return resource.RetryableError(err1)
-		}
-		readVpc := make(map[string]interface{})
-		readVpc["VpcId.1"] = d.Id()
-		action = "DescribeVpcs"
-		logger.Debug(logger.ReqFormat, action, deleteVpc)
-		resp, err := conn.DescribeVpcs(&readVpc)
-		logger.Debug(logger.AllFormat, action, readVpc, *resp)
-		if err != nil && notFoundError(err) {
+		} else if notFoundError(err1) {
 			return nil
+		} else {
+			return resource.RetryableError(fmt.Errorf("error on  deleting vpc %q, %s", d.Id(), err1))
 		}
-		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("error on  reading VpcS when delete %q, %s", d.Id(), err))
-		}
-		itemset, ok := (*resp)["VpcSet"]
-		if !ok {
-			return nil
-		}
-		item, ok := itemset.([]interface{})
-		if !ok || len(item) == 0 {
-			return nil
-		}
-		return resource.RetryableError(fmt.Errorf("error on  deleting VpcS %q, %s", d.Id(), err1))
 	})
 }
