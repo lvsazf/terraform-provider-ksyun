@@ -163,12 +163,6 @@ func resourceRabbitmqSecurityRuleDelete(d *schema.ResourceData, meta interface{}
 	deleteReq["InstanceId"] = d.Id()
 	deleteReq["Cidrs"] = strings.Join(cidrs, ",")
 	action := "DeleteSecurityGroupRules"
-	//logger.Debug(logger.ReqFormat, action, deleteReq)
-	//resp, err := conn.DeleteSecurityGroupRules(&deleteReq)
-	//if err != nil {
-	//	return fmt.Errorf("error on delete instance security rule: %s", err)
-	//}
-	//logger.Debug(logger.RespFormat, action, deleteReq, *resp)
 
 	return resource.Retry(25*time.Minute, func() *resource.RetryError {
 		logger.Debug(logger.ReqFormat, action, deleteReq)
