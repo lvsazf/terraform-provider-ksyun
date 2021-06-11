@@ -407,8 +407,8 @@ func resourceKsyunMysqlRead(d *schema.ResourceData, meta interface{}) error {
 		krdsMapList[num] = krdsMap
 	}
 	logger.DebugInfo(" converted ---- %+v ", krdsMapList)
-	_ = SetDByFkResp(d, krdsMapList[0], getInTheCar)
-
+	//_ = SetDByFkResp(d, krdsMapList[0], getInTheCar)
+	SdkResponseAutoResourceData(d, resourceKsyunKrds(), krdsMapList[0], nil)
 	return nil
 }
 
