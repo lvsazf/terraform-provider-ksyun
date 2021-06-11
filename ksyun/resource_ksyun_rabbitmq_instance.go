@@ -334,7 +334,7 @@ func resourceRabbitmqInstanceRead(d *schema.ResourceData, meta interface{}) erro
 		return nil
 	}
 
-	SdkResponseAutoResourceData(d, resourceKsyunEip(), item, nil)
+	SdkResponseAutoResourceData(d, resourceKsyunRabbitmq(), item, nil)
 
 	return nil
 }
