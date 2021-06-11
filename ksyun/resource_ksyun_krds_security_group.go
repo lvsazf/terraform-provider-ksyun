@@ -2,11 +2,13 @@ package ksyun
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-ksyun/logger"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -336,7 +338,7 @@ func resourceKsyunKrdsSecurityGroupRead(d *schema.ResourceData, meta interface{}
 
 func resourceKsyunKrdsSecurityGroupDelete(d *schema.ResourceData, meta interface{}) error {
 	conn := meta.(*KsyunClient).krdsconn
-	req := map[string]interface{}{"SecurityGroupId": d.Id()}
+	req := map[string]interface{}{"SecurityGroupId.1": d.Id()}
 	action := "DeleteSecurityGroup"
 
 	return resource.Retry(25*time.Minute, func() *resource.RetryError {
@@ -346,13 +348,32 @@ func resourceKsyunKrdsSecurityGroupDelete(d *schema.ResourceData, meta interface
 
 		if err == nil {
 			return nil
-		} else if notFoundError(err) {
-			return nil
-		} else if inUseError(err) {
-			return resource.RetryableError(err)
-		} else {
-			return resource.NonRetryableError(fmt.Errorf("error on  deleting Krds SecurityGroup %q, %s", d.Id(), err))
 		}
 
+		if checkExist(err) {
+			return nil
+		}
+
+		//else if inUseError(err) {
+			return resource.RetryableError(err)
+		//} else {
+		//	return resource.NonRetryableError(fmt.Errorf("error on  deleting Krds SecurityGroup %q, %s", d.Id(), err))
+		//}
+
 	})
+}
+
+func checkExist(err error) bool {
+	if ksyunError, ok := err.(awserr.RequestFailure); ok && ksyunError.StatusCode() == 404 {
+		return true
+	}
+	errMessage := strings.ToLower(err.Error())
+	if strings.Contains(errMessage, "notfound") ||
+	   strings.Contains(errMessage, "not found") ||
+	   strings.Contains(errMessage, "not_found") {
+		//strings.Contains(errMessage,"notfound"){
+		return true
+	}
+	return false
+
 }
