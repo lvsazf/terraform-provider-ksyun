@@ -277,8 +277,8 @@ func resourceRedisInstanceParamCreate(d *schema.ResourceData, meta interface{}) 
 	if !ok || v1 == nil {
 		return nil
 	}
-
-	if v2, o := d.GetOk("reset_all_parameters"); o && !v2.(bool) {
+	v2, _ := d.GetOk("reset_all_parameters")
+	if !v2.(bool) {
 		conn := meta.(*KsyunClient).kcsv1conn
 		createReq := make(map[string]interface{})
 		if az, ok := d.GetOk("available_zone"); ok {
@@ -362,7 +362,7 @@ func resourceRedisInstanceDelete(d *schema.ResourceData, meta interface{}) error
 		action := "DescribeCacheCluster"
 		logger.Debug(logger.ReqFormat, action, queryReq)
 		if resp, err = conn.DescribeCacheCluster(&queryReq); err != nil {
-			if strings.Contains(strings.ToLower(err.Error()), "cannot be found") {
+			if validateExists(err) {
 				return nil
 			}
 			return resource.NonRetryableError(err)
@@ -370,6 +370,10 @@ func resourceRedisInstanceDelete(d *schema.ResourceData, meta interface{}) error
 		logger.Debug(logger.RespFormat, action, queryReq, *resp)
 		return resource.RetryableError(errors.New("deleting"))
 	})
+}
+
+func validateExists(err error) bool {
+	return strings.Contains(strings.ToLower(err.Error()), "cannot be found") || strings.Contains(strings.ToLower(err.Error()), "invalidaction")
 }
 
 func resourceRedisInstanceUpdate(d *schema.ResourceData, meta interface{}) error {

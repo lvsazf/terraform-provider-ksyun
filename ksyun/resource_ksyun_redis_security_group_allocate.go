@@ -2,8 +2,10 @@ package ksyun
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-ksyun/logger"
+	"time"
 )
 
 // redis security group allocate
@@ -71,11 +73,6 @@ func resourceRedisSecurityGroupAllocateCreate(d *schema.ResourceData, meta inter
 }
 
 func resourceRedisSecurityGroupAllocateDelete(d *schema.ResourceData, meta interface{}) error {
-	var (
-		resp *map[string]interface{}
-		err  error
-	)
-
 	conn := meta.(*KsyunClient).kcsv1conn
 	createReq := make(map[string]interface{})
 	if az, ok := d.GetOk("available_zone"); ok {
@@ -87,17 +84,22 @@ func resourceRedisSecurityGroupAllocateDelete(d *schema.ResourceData, meta inter
 		createReq[fmt.Sprintf("%v%v", "CacheId.", i+1)] = id
 	}
 	action := "DeallocateSecurityGroup"
-	logger.Debug(logger.ReqFormat, action, createReq)
-	if resp, err = conn.DeallocateSecurityGroup(&createReq); err != nil {
-		return fmt.Errorf("error on deallocate redis security group: %s", err)
-	}
-	logger.Debug(logger.RespFormat, action, createReq, *resp)
-	data := (*resp)["Data"].([]interface{})
-	if len(data) == 0 {
-		return nil
-	}
 
-	return fmt.Errorf("error on deallocate redis security group: %v", data)
+	return resource.Retry(25*time.Minute, func() *resource.RetryError {
+		logger.Debug(logger.ReqFormat, action, createReq)
+		resp, err := conn.DeallocateSecurityGroup(&createReq)
+		logger.Debug(logger.RespFormat, action, createReq, *resp, err)
+		if err == nil  {
+			data := (*resp)["Data"].([]interface{})
+			if len(data) == 0 {
+				return nil
+			}
+		}
+		if err != nil && inUseError(err) {
+			return resource.RetryableError(err)
+		}
+		return nil
+	})
 }
 
 func resourceRedisSecurityGroupAllocateRead(d *schema.ResourceData, meta interface{}) error {

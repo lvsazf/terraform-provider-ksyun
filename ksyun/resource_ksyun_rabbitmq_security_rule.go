@@ -2,6 +2,7 @@ package ksyun
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-ksyun/logger"
 	"strings"
@@ -161,14 +162,23 @@ func resourceRabbitmqSecurityRuleDelete(d *schema.ResourceData, meta interface{}
 	deleteReq := make(map[string]interface{})
 	deleteReq["InstanceId"] = d.Id()
 	deleteReq["Cidrs"] = strings.Join(cidrs, ",")
-	logger.Debug(logger.ReqFormat, "DeleteSecurityGroupRules", deleteReq)
-	resp, err := conn.DeleteSecurityGroupRules(&deleteReq)
-	if err != nil {
-		return fmt.Errorf("error on delete instance security rule: %s", err)
-	}
-	logger.Debug(logger.RespFormat, "DeleteSecurityGroupRules", deleteReq, *resp)
+	action := "DeleteSecurityGroupRules"
 
-	return nil
+	return resource.Retry(25*time.Minute, func() *resource.RetryError {
+		logger.Debug(logger.ReqFormat, action, deleteReq)
+		resp, err := conn.DeleteSecurityGroupRules(&deleteReq)
+		logger.Debug(logger.RespFormat, action, deleteReq, *resp, err)
+		if err == nil  {
+			data := (*resp)["Data"].([]interface{})
+			if len(data) == 0 {
+				return nil
+			}
+		}
+		if err != nil && inUseError(err) {
+			return resource.RetryableError(err)
+		}
+		return nil
+	})
 }
 
 func resourceRabbitmqSecurityRuleRead(d *schema.ResourceData, meta interface{}) error {
