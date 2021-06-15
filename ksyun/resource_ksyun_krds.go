@@ -108,8 +108,9 @@ func resourceKsyunKrds() *schema.Resource {
 				Required: true,
 			},
 			"master_user_password": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:      schema.TypeString,
+				Required:  true,
+				Sensitive: true,
 			},
 			"vpc_id": {
 				Type:     schema.TypeString,
