@@ -79,7 +79,6 @@ func resourceKsyunRabbitmq() *schema.Resource {
 			},
 			"node_num": {
 				Type:     schema.TypeInt,
-				Optional: true,
 				Computed: true,
 			},
 			"availability_zone": {
