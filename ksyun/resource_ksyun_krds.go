@@ -383,11 +383,20 @@ func resourceKsyunMysqlRead(d *schema.ResourceData, meta interface{}) error {
 
 	krdsIds := make([]string, len(instances))
 	krdsMapList := make([]map[string]interface{}, len(instances))
+	extra := make(map[string]SdkResponseMapping)
 	for num, instance := range instances {
 		instanceInfo, _ := instance.(map[string]interface{})
 		krdsMap := make(map[string]interface{})
 		for k, v := range instanceInfo {
 			if k == "DBInstanceClass" {
+				extra["DBInstanceClass"] = SdkResponseMapping{
+					Field: "db_instance_class",
+					FieldRespFunc: func(i interface{}) interface{} {
+						value := i.(map[string]interface{})
+						return fmt.Sprintf("db.ram.%v|db.disk.%v", value["Ram"], value["Disk"])
+					},
+				}
+				krdsMap["DBInstanceClass"] = v
 			} else if k == "ReadReplicaDBInstanceIdentifiers" {
 			} else if k == "DBSource" {
 			} else {
@@ -408,7 +417,7 @@ func resourceKsyunMysqlRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	logger.DebugInfo(" converted ---- %+v ", krdsMapList)
 	//_ = SetDByFkResp(d, krdsMapList[0], getInTheCar)
-	SdkResponseAutoResourceData(d, resourceKsyunKrds(), krdsMapList[0], nil)
+	SdkResponseAutoResourceData(d, resourceKsyunKrds(), krdsMapList[0], extra)
 	return nil
 }
 
