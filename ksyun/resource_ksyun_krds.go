@@ -108,8 +108,9 @@ func resourceKsyunKrds() *schema.Resource {
 				Required: true,
 			},
 			"master_user_password": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:      schema.TypeString,
+				Required:  true,
+				Sensitive: true,
 			},
 			"vpc_id": {
 				Type:     schema.TypeString,
@@ -125,13 +126,13 @@ func resourceKsyunKrds() *schema.Resource {
 			},
 			"duration": {
 				Type:     schema.TypeInt,
-				Required: false,
 				Optional: true,
+				Computed: true,
 			},
 			"security_group_id": {
 				Type:        schema.TypeString,
-				Required:    false,
 				Optional:    true,
+				Computed:    true,
 				Description: "proprietary security group id for krds",
 			},
 			"db_parameter_group_id": {
@@ -142,23 +143,23 @@ func resourceKsyunKrds() *schema.Resource {
 			},
 			"preferred_backup_time": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
+				Computed: true,
 			},
 			"availability_zone_1": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
+				Computed: true,
 			},
 			"availability_zone_2": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
+				Computed: true,
 			},
 			"project_id": {
 				Type:     schema.TypeInt,
-				Required: false,
 				Optional: true,
+				Computed: true,
 			},
 			"parameters": {
 				Type: schema.TypeSet,
@@ -180,7 +181,6 @@ func resourceKsyunKrds() *schema.Resource {
 			},
 			"port": {
 				Type:     schema.TypeInt,
-				Required: false,
 				Optional: true,
 				Computed: true,
 			},
@@ -407,8 +407,8 @@ func resourceKsyunMysqlRead(d *schema.ResourceData, meta interface{}) error {
 		krdsMapList[num] = krdsMap
 	}
 	logger.DebugInfo(" converted ---- %+v ", krdsMapList)
-	_ = SetDByFkResp(d, krdsMapList[0], getInTheCar)
-
+	//_ = SetDByFkResp(d, krdsMapList[0], getInTheCar)
+	SdkResponseAutoResourceData(d, resourceKsyunKrds(), krdsMapList[0], nil)
 	return nil
 }
 
