@@ -521,6 +521,14 @@ func SdkResponseAutoResourceData(d *schema.ResourceData, resource *schema.Resour
 		for k, v := range root {
 			var value interface{}
 			var err error
+			if v == nil {
+				continue
+			}
+			if str, ok := v.(string); ok {
+				if str == "" {
+					continue
+				}
+			}
 			m := SdkResponseMapping{}
 			target := Hump2Downline(k)
 			if _, ok := extra[k]; ok {

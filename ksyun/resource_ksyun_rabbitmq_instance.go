@@ -31,8 +31,9 @@ func resourceKsyunRabbitmq() *schema.Resource {
 				Required: true,
 			},
 			"instance_password": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:      schema.TypeString,
+				Required:  true,
+				Sensitive: true,
 			},
 			"vpc_id": {
 				Type:     schema.TypeString,
@@ -152,7 +153,6 @@ func resourceKsyunRabbitmq() *schema.Resource {
 			},
 			"mode_name": {
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"eip": {
@@ -342,6 +342,10 @@ func resourceRabbitmqInstanceRead(d *schema.ResourceData, meta interface{}) erro
 	logger.Debug(logger.RespFormat, action, queryReq, *resp)
 	if item, ok = (*resp)["Data"].(map[string]interface{}); !ok {
 		return nil
+	}
+
+	if _, ok = item["Duration"]; !ok {
+		item["Duration"] = 0
 	}
 
 	SdkResponseAutoResourceData(d, resourceKsyunRabbitmq(), item, nil)
