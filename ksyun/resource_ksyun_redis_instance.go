@@ -99,10 +99,22 @@ func resourceRedisInstance() *schema.Resource {
 			"duration": {
 				Type:     schema.TypeString,
 				Optional: true,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					if v, ok := d.GetOk("bill_type"); ok && v == 1 {
+						return false
+					}
+					return true
+				},
 			},
 			"duration_unit": {
 				Type:     schema.TypeString,
 				Optional: true,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					if v, ok := d.GetOk("bill_type"); ok && v == 1 {
+						return false
+					}
+					return true
+				},
 			},
 			"pass_word": {
 				Type:     schema.TypeString,
@@ -553,19 +565,39 @@ func resourceRedisInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	if item, ok = (*resp)["Data"].(map[string]interface{}); !ok {
 		return nil
 	}
-	result := make(map[string]interface{})
-	for k, v := range item {
-		if k == "protocol" || k == "slaveNum" || !redisInstanceKeys[k] {
-			continue
-		}
-		result[Hump2Downline(k)] = v
-	}
-	for k, v := range result {
-		if err := d.Set(k, v); err != nil {
-			return fmt.Errorf("error set data %v :%v", v, err)
-		}
+	//result := make(map[string]interface{})
+	//for k, v := range item {
+	//	if k == "protocol" || k == "slaveNum" || !redisInstanceKeys[k] {
+	//		continue
+	//	}
+	//	result[Hump2Downline(k)] = v
+	//}
+	//for k, v := range result {
+	//	if err := d.Set(k, v); err != nil {
+	//		return fmt.Errorf("error set data %v :%v", v, err)
+	//	}
+	//}
+	extra := make(map[string]SdkResponseMapping)
+	extra["az"] = SdkResponseMapping{
+		Field: "available_zone",
 	}
 
+	extra["protocol"] = SdkResponseMapping{
+		Field: "protocol",
+		FieldRespFunc: func(i interface{}) interface{} {
+			return strings.Replace(i.(string), "redis ", "", -1)
+		},
+	}
+
+	extra["size"] = SdkResponseMapping{
+		Field: "capacity",
+	}
+	SdkResponseAutoResourceData(d, resourceRedisInstance(), item, extra)
+	extra1 := make(map[string]SdkResponseMapping)
+	extra1["az"] = SdkResponseMapping{
+		Field: "az",
+	}
+	SdkResponseAutoResourceData(d, resourceRedisInstance(), item, extra1)
 	//resourceRedisInstanceParamRead(d, meta)
 	return nil
 }

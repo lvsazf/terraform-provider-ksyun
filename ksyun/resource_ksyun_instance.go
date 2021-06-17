@@ -113,9 +113,10 @@ func resourceKsyunInstance() *schema.Resource {
 				Required: true,
 			},
 			"purchase_time": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				ForceNew: true,
+				Type:             schema.TypeInt,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: purchaseTimeDiffSuppressFunc,
 			},
 			"security_group_id": {
 				Type:     schema.TypeSet,
