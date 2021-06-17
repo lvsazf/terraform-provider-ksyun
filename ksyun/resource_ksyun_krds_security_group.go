@@ -64,12 +64,10 @@ func resourceKsyunKrdsSecurityGroup() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"security_group_rule_id": {
 							Type:     schema.TypeString,
-							Optional: true,
 							Computed: true,
 						},
 						"created": {
 							Type:     schema.TypeString,
-							Optional: true,
 							Computed: true,
 						},
 						"security_group_rule_protocol": {
@@ -233,25 +231,25 @@ func resourceKsyunKrdsSecurityGroupUpdate(d *schema.ResourceData, meta interface
 		addResp, err := conn.ModifySecurityGroupRule(&addReq)
 		logger.Debug(logger.AllFormat, action, addReq, *addResp, err)
 
-		rulesInfoMap := map[int]map[string]interface{}{}
+		//rulesInfoMap := map[int]map[string]interface{}{}
 		// terraform.tfstate读取的不对，所以用output_file里的数据
-		rulesInfo := d.Get("security_group_rule").(*schema.Set).List()
-		if err != nil {
-			return err
-		}
-		for _, value := range rulesInfo {
-			rulesInfoMap[secParameterToHash(value)] = value.(map[string]interface{})
-		}
-		logger.DebugInfo(" rulesInfoMap : %v", rulesInfoMap)
+		//rulesInfo := d.Get("security_group_rule").(*schema.Set).List()
+		//if err != nil {
+		//	return err
+		//}
+		//for _, value := range rulesInfo {
+		//	rulesInfoMap[secParameterToHash(value)] = value.(map[string]interface{})
+		//}
+		//logger.DebugInfo(" rulesInfoMap : %v", rulesInfoMap)
 
 		delReq := map[string]interface{}{
 			"SecurityGroupId":         d.Id(),
-			"SecurityGroupRules":      delRules,
 			"SecurityGroupRuleAction": "Delete",
 		}
 		for index, rule := range delRules {
 			num := index + 1
-			delReq["SecurityGroupRule.SecurityGroupRuleId."+strconv.Itoa(num)] = rulesInfoMap[secParameterToHash(rule)]["security_group_rule_id"]
+			//规则Id已经返回 直接从获取规则ID 拼接删除
+			delReq["SecurityGroupRule.SecurityGroupRuleId."+strconv.Itoa(num)] = rule.(map[string]interface{})["security_group_rule_id"].(string)
 		}
 		action = "ModifySecurityGroupRule"
 		logger.Debug(logger.ReqFormat, action, delReq)
@@ -355,7 +353,7 @@ func resourceKsyunKrdsSecurityGroupDelete(d *schema.ResourceData, meta interface
 		}
 
 		//else if inUseError(err) {
-			return resource.RetryableError(err)
+		return resource.RetryableError(err)
 		//} else {
 		//	return resource.NonRetryableError(fmt.Errorf("error on  deleting Krds SecurityGroup %q, %s", d.Id(), err))
 		//}
@@ -369,8 +367,8 @@ func checkExist(err error) bool {
 	}
 	errMessage := strings.ToLower(err.Error())
 	if strings.Contains(errMessage, "notfound") ||
-	   strings.Contains(errMessage, "not found") ||
-	   strings.Contains(errMessage, "not_found") {
+		strings.Contains(errMessage, "not found") ||
+		strings.Contains(errMessage, "not_found") {
 		//strings.Contains(errMessage,"notfound"){
 		return true
 	}
