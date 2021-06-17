@@ -49,8 +49,9 @@ func resourceKsyunEip() *schema.Resource {
 				}, false),
 			},
 			"purchase_time": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:             schema.TypeInt,
+				Optional:         true,
+				DiffSuppressFunc: purchaseTimeDiffSuppressFunc,
 			},
 			"project_id": {
 				Type:     schema.TypeString,
