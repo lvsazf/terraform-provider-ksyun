@@ -270,12 +270,12 @@ func resourceRedisInstanceCreate(d *schema.ResourceData, meta interface{}) error
 		MinTimeout: 1 * time.Minute,
 	}
 	_, err = stateConf.WaitForState()
-	_ = resourceRedisInstanceRead(d, meta)
+	_ = resourceRedisInstanceParamCreate(d, meta)
 	if err != nil {
 		return fmt.Errorf("error on create Instance: %s", err)
 	}
 	// create instance parameter
-	return resourceRedisInstanceParamCreate(d, meta)
+	return resourceRedisInstanceRead(d, meta)
 }
 
 func resourceRedisInstanceParamCreate(d *schema.ResourceData, meta interface{}) error {
@@ -334,7 +334,7 @@ func resourceRedisInstanceParamCreate(d *schema.ResourceData, meta interface{}) 
 			MinTimeout: 1 * time.Minute,
 		}
 		_, err = stateConf.WaitForState()
-		_ = resourceRedisInstanceParamRead(d, meta)
+		//_ = resourceRedisInstanceParamRead(d, meta)
 		if err != nil {
 			return fmt.Errorf("error on set instance parameter: %s", err)
 		}
@@ -535,7 +535,7 @@ func resourceRedisInstanceUpdate(d *schema.ResourceData, meta interface{}) error
 		MinTimeout: 1 * time.Minute,
 	}
 	_, err = stateConf.WaitForState()
-	_ = resourceRedisInstanceParamRead(d, meta)
+	_ = resourceRedisInstanceRead(d, meta)
 	if err != nil {
 		return fmt.Errorf("error on set instance parameter: %s", err)
 	}
@@ -599,6 +599,8 @@ func resourceRedisInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	SdkResponseAutoResourceData(d, resourceRedisInstance(), item, extra1)
 	//resourceRedisInstanceParamRead(d, meta)
+	_ = resourceRedisInstanceParamRead(d, meta)
+
 	return nil
 }
 
