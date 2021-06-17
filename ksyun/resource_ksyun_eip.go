@@ -171,9 +171,11 @@ func resourceKsyunEipUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	only = map[string]SdkReqTransform{
 		"band_width": {},
+		"project_id": {},
 	}
 
 	req, err := SdkRequestAutoMapping(d, r, true, only, nil)
+	logger.Debug(logger.ReqFormat, "%%%%%%%%%%%%%%%%", &req)
 	if err != nil {
 		return fmt.Errorf("error on modifying Address, %s", err)
 	}
