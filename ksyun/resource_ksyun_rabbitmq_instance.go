@@ -31,8 +31,9 @@ func resourceKsyunRabbitmq() *schema.Resource {
 				Required: true,
 			},
 			"instance_password": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:      schema.TypeString,
+				Required:  true,
+				Sensitive: true,
 			},
 			"vpc_id": {
 				Type:     schema.TypeString,
@@ -49,10 +50,11 @@ func resourceKsyunRabbitmq() *schema.Resource {
 			"project_id": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"project_name": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 			"bill_type": {
 				Type:     schema.TypeInt,
@@ -76,11 +78,12 @@ func resourceKsyunRabbitmq() *schema.Resource {
 			},
 			"node_num": {
 				Type:     schema.TypeInt,
-				Optional: true,
+				Computed: true,
 			},
 			"availability_zone": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"enable_plugins": {
 				Type:     schema.TypeString,
@@ -96,55 +99,61 @@ func resourceKsyunRabbitmq() *schema.Resource {
 			},
 			"user_id": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 			"region": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 			"status_name": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"vip": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"web_vip": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"protocol": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"security_group_id": {
 				Type:     schema.TypeInt,
 				Optional: true,
+				Computed: true,
 			},
 			"network_type": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"product_id": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 			"create_date": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 			"expiration_date": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 			"product_what": {
 				Type:     schema.TypeInt,
-				Optional: true,
+				Computed: true,
 			},
 			"mode_name": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 			"eip": {
 				Type:     schema.TypeString,
@@ -161,10 +170,11 @@ func resourceKsyunRabbitmq() *schema.Resource {
 			"port": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 			"status": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 		},
 	}
@@ -334,7 +344,11 @@ func resourceRabbitmqInstanceRead(d *schema.ResourceData, meta interface{}) erro
 		return nil
 	}
 
-	SdkResponseAutoResourceData(d, resourceKsyunEip(), item, nil)
+	if _, ok = item["Duration"]; !ok {
+		item["Duration"] = 0
+	}
+
+	SdkResponseAutoResourceData(d, resourceKsyunRabbitmq(), item, nil)
 
 	return nil
 }

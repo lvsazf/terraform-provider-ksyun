@@ -185,37 +185,72 @@ func getSchemeElem(resource *schema.Resource, keys []string) *schema.Resource {
 	return r
 }
 
-func transformListFilter(v interface{}, k string, t SdkReqTransform, index int, req *map[string]interface{}) int {
-	if list, ok := v.([]interface{}); ok {
-		for _, v1 := range list {
-			if m1, ok := v1.(map[string]interface{}); ok {
-				for k2, v2 := range m1 {
-					if v3, ok := v2.(*schema.Set); ok {
-						for i, v4 := range (*v3).List() {
-							if i == 0 {
-								k = k + "." + k2
-								if target, ok := t.mappings[k]; ok {
-									(*req)["Filter."+strconv.Itoa(index)+".Name"] = target
-								} else {
-									(*req)["Filter."+strconv.Itoa(index)+".Name"] = Downline2Filter(k)
-								}
+func transformFieldReqFunc(v interface{}, k string, t SdkReqTransform, index int, req *map[string]interface{}) (bool, int, error) {
+	if t.FieldReqFunc != nil {
+		i, err := t.FieldReqFunc(v, t.mapping, t.mappings, index, k, req)
+		if err != nil {
+			return false, i, err
+		}
+		return true, i, nil
+	}
+	return false, index, nil
+}
 
-							}
-							(*req)["Filter."+strconv.Itoa(index)+".Value."+strconv.Itoa(i+1)] = v4
-						}
-						index = index + 1
-					} else {
-						index = transformListFilter(v2, k, t, index, req)
-					}
-				}
+func transformDefault(v interface{}, k string, t SdkReqTransform, req *map[string]interface{}) error {
+	if ok, _, err := transformFieldReqFunc(v, k, t, 0, req); ok {
+		return err
+	}
+	if strings.TrimSpace(t.mapping) == "" {
+		(*req)[Downline2Hump(k)] = v
+	} else {
+		(*req)[t.mapping] = v
+	}
+	return nil
+}
+
+func transformSingleN(v interface{}, k string, t SdkReqTransform, req *map[string]interface{}) error {
+	if ok, _, err := transformFieldReqFunc(v, k, t, 0, req); ok {
+		if err != nil {
+			return fmt.Errorf("error on transformSingleN with transformFieldReqFunc %s", err)
+		}
+		return nil
+	}
+	if strings.TrimSpace(t.mapping) == "" {
+		(*req)[Downline2Hump(k)+".1"] = v
+	} else {
+		(*req)[t.mapping+".1"] = v
+	}
+	return nil
+}
+
+func transformWithN(v interface{}, k string, t SdkReqTransform, req *map[string]interface{}) error {
+	if x, ok := v.(*schema.Set); ok {
+		if ok, _, err := transformFieldReqFunc(v, k, t, 0, req); ok {
+			if err != nil {
+				return fmt.Errorf("error on transformWithN with transformFieldReqFunc %s", err)
+			}
+			return nil
+		}
+		for i, value := range (*x).List() {
+			if strings.TrimSpace(t.mapping) == "" {
+				(*req)[Downline2Hump(k)+"."+strconv.Itoa(i+1)] = value
+			} else {
+				(*req)[t.mapping+"."+strconv.Itoa(i+1)] = value
 			}
 		}
 	}
-	return index
+
+	return nil
 }
 
-func transformListN(v interface{}, k string, t SdkReqTransform, req *map[string]interface{}) {
+func transformListN(v interface{}, k string, t SdkReqTransform, req *map[string]interface{}) error {
 	if list, ok := v.([]interface{}); ok {
+		if ok, _, err := transformFieldReqFunc(v, k, t, 0, req); ok {
+			if err != nil {
+				return fmt.Errorf("error on transformListN with transformFieldReqFunc %s", err)
+			}
+			return nil
+		}
 		for index, v1 := range list {
 			if m1, ok := v1.(map[string]interface{}); ok {
 				for k2, v2 := range m1 {
@@ -225,18 +260,17 @@ func transformListN(v interface{}, k string, t SdkReqTransform, req *map[string]
 			}
 		}
 	}
+	return nil
 }
 
-func getFinalKey(t SdkReqTransform, k string) string {
-	if target, ok := t.mappings[k]; ok {
-		return target
-	} else {
-		return Downline2Hump(k)
-	}
-}
-
-func transformListUnique(v interface{}, k string, t SdkReqTransform, req *map[string]interface{}, d *schema.ResourceData, forceGet bool) {
+func transformListUnique(v interface{}, k string, t SdkReqTransform, req *map[string]interface{}, d *schema.ResourceData, forceGet bool) error {
 	if list, ok := v.([]interface{}); ok {
+		if ok, _, err := transformFieldReqFunc(v, k, t, 0, req); ok {
+			if err != nil {
+				return fmt.Errorf("error on transformListN with transformFieldReqFunc %s", err)
+			}
+			return nil
+		}
 		for i, v1 := range list {
 			if m1, ok := v1.(map[string]interface{}); ok {
 				for k2, v2 := range m1 {
@@ -264,35 +298,103 @@ func transformListUnique(v interface{}, k string, t SdkReqTransform, req *map[st
 			}
 		}
 	}
+	return nil
 }
 
-func transformWithN(v interface{}, k string, t SdkReqTransform, req *map[string]interface{}) {
+func transformWithFilter(v interface{}, k string, t SdkReqTransform, index int, req *map[string]interface{}) (int, error) {
 	if x, ok := v.(*schema.Set); ok {
+		if ok, j, err := transformFieldReqFunc(v, k, t, index, req); ok {
+			if err != nil {
+				return index, fmt.Errorf("error on transformWithFilter with transformFieldReqFunc %s", err)
+			}
+			return j, nil
+		}
 		for i, value := range (*x).List() {
-			if strings.TrimSpace(t.mapping) == "" {
-				(*req)[Downline2Hump(k)+"."+strconv.Itoa(i+1)] = value
-			} else {
-				(*req)[t.mapping+"."+strconv.Itoa(i+1)] = value
+			if i == 0 {
+				if strings.TrimSpace(t.mapping) == "" {
+					(*req)["Filter."+strconv.Itoa(index)+".Name"] = Downline2Filter(k)
+				} else {
+					(*req)["Filter."+strconv.Itoa(index)+".Name"] = t.mapping
+				}
+
+			}
+			(*req)["Filter."+strconv.Itoa(index)+".Value."+strconv.Itoa(i+1)] = value
+		}
+		index = index + 1
+	}
+	return index, nil
+}
+
+func transformListFilter(v interface{}, k string, t SdkReqTransform, index int, req *map[string]interface{}) (int, error) {
+	var err error
+	if list, ok := v.([]interface{}); ok {
+		if ok, j, err := transformFieldReqFunc(v, k, t, index, req); ok {
+			if err != nil {
+				return index, fmt.Errorf("error on transformListFilter with transformFieldReqFunc %s", err)
+			}
+			return j, nil
+		}
+		for _, v1 := range list {
+			if m1, ok := v1.(map[string]interface{}); ok {
+				for k2, v2 := range m1 {
+					if v3, ok := v2.(*schema.Set); ok {
+						for i, v4 := range (*v3).List() {
+							if i == 0 {
+								k = k + "." + k2
+								if target, ok := t.mappings[k]; ok {
+									(*req)["Filter."+strconv.Itoa(index)+".Name"] = target
+								} else {
+									(*req)["Filter."+strconv.Itoa(index)+".Name"] = Downline2Filter(k)
+								}
+
+							}
+							(*req)["Filter."+strconv.Itoa(index)+".Value."+strconv.Itoa(i+1)] = v4
+						}
+						index = index + 1
+					} else {
+						index, err = transformListFilter(v2, k, t, index, req)
+						if err != nil {
+							return index, err
+						}
+					}
+				}
 			}
 		}
+	}
+	return index, nil
+}
+
+func getFinalKey(t SdkReqTransform, k string) string {
+	if target, ok := t.mappings[k]; ok {
+		return target
+	} else {
+		return Downline2Hump(k)
 	}
 }
 
 func SdkRequestAutoExtra(r map[string]SdkReqTransform, d *schema.ResourceData, forceGet bool) map[string]SdkRequestMapping {
 	var extra map[string]SdkRequestMapping
 	extra = make(map[string]SdkRequestMapping)
+	index := 1
 	for k, _ := range r {
 		extra[k] = SdkRequestMapping{
 			FieldReqFunc: func(item interface{}, field string, source string, m *map[string]interface{}) error {
+				var err error
 				switch r[source].Type {
 				case TransformListUnique:
-					transformListUnique(item, source, r[source], m, d, forceGet)
+					err = transformListUnique(item, source, r[source], m, d, forceGet)
 				case TransformWithN:
-					transformWithN(item, source, r[source], m)
+					err = transformWithN(item, source, r[source], m)
 				case TransformListN:
-					transformListN(item, source, r[source], m)
+					err = transformListN(item, source, r[source], m)
+				case TransformDefault:
+					err = transformDefault(item, source, r[source], m)
+				case TransformWithFilter:
+					index, err = transformWithFilter(item, source, r[source], index, m)
+				case TransformListFilter:
+					index, err = transformListFilter(item, source, r[source], index, m)
 				}
-				return nil
+				return err
 			},
 		}
 	}
@@ -312,9 +414,9 @@ func SdkRequestAutoMapping(d *schema.ResourceData, resource *schema.Resource, is
 	if onlyTransform != nil {
 		for k, v := range onlyTransform {
 			if isUpdate {
-				count, err = requestUpdateMapping(d, k, v, count, extraMapping, &req)
+				count, err = requestUpdateMapping(d, k, v, count, nil, &req)
 			} else {
-				count, err = requestCreateMapping(d, k, v, count, extraMapping, &req, false)
+				count, err = requestCreateMapping(d, k, v, count, nil, &req, false)
 			}
 		}
 	} else {
@@ -341,37 +443,26 @@ func requestCreateMapping(d *schema.ResourceData, k string, t SdkReqTransform, i
 	} else {
 		v, ok = d.GetOk(k)
 	}
+	if extraMapping == nil {
+		extraMapping = make(map[string]SdkRequestMapping)
+	}
 	if ok {
 		if _, ok := extraMapping[k]; !ok {
 			switch t.Type {
 			case TransformDefault:
-				if strings.TrimSpace(t.mapping) == "" {
-					(*req)[Downline2Hump(k)] = v
-				} else {
-					(*req)[t.mapping] = v
-				}
-
+				err = transformDefault(v, k, t, req)
+			case TransformSingleN:
+				err = transformSingleN(v, k, t, req)
 			case TransformWithN:
-				transformWithN(v, k, t, req)
-			case TransformWithFilter:
-				if x, ok := v.(*schema.Set); ok {
-					for i, value := range (*x).List() {
-						if i == 0 {
-							if strings.TrimSpace(t.mapping) == "" {
-								(*req)["Filter."+strconv.Itoa(index)+".Name"] = Downline2Filter(k)
-							} else {
-								(*req)["Filter."+strconv.Itoa(index)+".Name"] = t.mapping
-							}
-
-						}
-						(*req)["Filter."+strconv.Itoa(index)+".Value."+strconv.Itoa(i+1)] = value
-					}
-					index = index + 1
-				}
-			case TransformListFilter:
-				index = transformListFilter(v, k, t, index, req)
+				err = transformWithN(v, k, t, req)
+			case TransformListN:
+				err = transformListN(v, k, t, req)
 			case TransformListUnique:
-				transformListUnique(v, k, t, req, d, forceGet)
+				err = transformListUnique(v, k, t, req, d, forceGet)
+			case TransformWithFilter:
+				index, err = transformWithFilter(v, k, t, index, req)
+			case TransformListFilter:
+				index, err = transformListFilter(v, k, t, index, req)
 			}
 
 		} else {
@@ -388,7 +479,7 @@ func requestCreateMapping(d *schema.ResourceData, k string, t SdkReqTransform, i
 
 func requestUpdateMapping(d *schema.ResourceData, k string, t SdkReqTransform, index int, extraMapping map[string]SdkRequestMapping, req *map[string]interface{}) (int, error) {
 	var err error
-	if d.HasChange(k) && !d.IsNewResource() {
+	if t.forceUpdateParam || (d.HasChange(k) && !d.IsNewResource()) {
 		index, err = requestCreateMapping(d, k, t, index, extraMapping, req, true)
 	}
 	return index, err
@@ -430,6 +521,14 @@ func SdkResponseAutoResourceData(d *schema.ResourceData, resource *schema.Resour
 		for k, v := range root {
 			var value interface{}
 			var err error
+			if v == nil {
+				continue
+			}
+			if str, ok := v.(string); ok {
+				if str == "" {
+					continue
+				}
+			}
 			m := SdkResponseMapping{}
 			target := Hump2Downline(k)
 			if _, ok := extra[k]; ok {
@@ -565,6 +664,9 @@ func SdkResponseAutoMapping(resource *schema.Resource, collectField string, item
 					} else {
 						result[m.Field] = m.FieldRespFunc(v)
 					}
+					if m.KeepAuto {
+						result[Hump2Downline(k)] = result[m.Field]
+					}
 				} else {
 					result[target] = v
 				}
@@ -648,4 +750,20 @@ func OtherErrorProcess(remain *int, error error) *resource.RetryError {
 	} else {
 		return resource.NonRetryableError(error)
 	}
+}
+
+func ModifyProjectInstance(resourceId string, param *map[string]interface{}, meta interface{}) error {
+	if projectId, ok := (*param)["ProjectId"]; ok {
+		req := make(map[string]interface{})
+		req["InstanceId"] = resourceId
+		req["ProjectId"] = projectId
+		client := meta.(*KsyunClient)
+		conn := client.iamconn
+		_, err := conn.UpdateInstanceProjectId(&req)
+		if err != nil {
+			return err
+		}
+		delete(*param, "ProjectId")
+	}
+	return nil
 }

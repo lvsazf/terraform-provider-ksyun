@@ -68,7 +68,7 @@ func resourceKsyunNat() *schema.Resource {
 
 			"charge_type": {
 				Type:         schema.TypeString,
-				ForceNew:     false,
+				ForceNew:     true,
 				Optional:     true,
 				Default:      "DailyPaidByTransfer",
 				ValidateFunc: validateNatChargeType,
@@ -76,7 +76,7 @@ func resourceKsyunNat() *schema.Resource {
 
 			"purchase_time": {
 				Type:     schema.TypeInt,
-				ForceNew: false,
+				ForceNew: true,
 				Optional: true,
 			},
 
@@ -135,13 +135,9 @@ func resourceKsyunNatRead(d *schema.ResourceData, meta interface{}) error {
 
 	readNat := make(map[string]interface{})
 	readNat["NatId.1"] = d.Id()
-	if pj, ok := d.GetOk("project_id"); ok {
-		readNat["ProjectId.1"] = fmt.Sprintf("%v", pj)
-	} else {
-		projectErr := GetProjectInfo(&readNat, client)
-		if projectErr != nil {
-			return projectErr
-		}
+	err := AddProjectInfo(d, &readNat, meta.(*KsyunClient))
+	if err != nil {
+		return fmt.Errorf("error on reading nat %q, %s", d.Id(), err)
 	}
 	action := "DescribeNats"
 	logger.Debug(logger.ReqFormat, action, readNat)
@@ -163,31 +159,25 @@ func resourceKsyunNatRead(d *schema.ResourceData, meta interface{}) error {
 func resourceKsyunNatUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*KsyunClient)
 	conn := client.vpcconn
-	//d.Partial(true)
-	attributeUpdate := false
-	modifyNat := make(map[string]interface{})
-	modifyNat["NatId"] = d.Id()
 
-	if d.HasChange("nat_name") && !d.IsNewResource() {
-		modifyNat["NatName"] = fmt.Sprintf("%v", d.Get("nat_name"))
-		attributeUpdate = true
+	req, err := SdkRequestAutoMapping(d, resourceKsyunNat(), true, nil, nil)
+	if err != nil {
+		return fmt.Errorf("error on updating Nat, %s", err)
 	}
-	if d.HasChange("band_width") && !d.IsNewResource() {
-		modifyNat["BandWidth"] = d.Get("band_width")
-		attributeUpdate = true
+	err = ModifyProjectInstance(d.Id(), &req, meta)
+	if err != nil {
+		return fmt.Errorf("error on updating Nat, %s", err)
 	}
-	if attributeUpdate {
+	if len(req) > 0 {
+		req["NatId"] = d.Id()
 		action := "ModifyNat"
-		logger.Debug(logger.ReqFormat, action, modifyNat)
-		resp, err := conn.ModifyNat(&modifyNat)
-		logger.Debug(logger.AllFormat, action, modifyNat, resp, err)
+		logger.Debug(logger.ReqFormat, action, req)
+		resp, err := conn.ModifyNat(&req)
+		logger.Debug(logger.AllFormat, action, req, resp, err)
 		if err != nil {
-			return fmt.Errorf("error on updating Subnet, %s", err)
+			return fmt.Errorf("error on updating Nat, %s", err)
 		}
-		//d.SetPartial("nat_name")
-		//d.SetPartial("band_width")
 	}
-	//d.Partial(false)
 	return resourceKsyunNatRead(d, meta)
 }
 

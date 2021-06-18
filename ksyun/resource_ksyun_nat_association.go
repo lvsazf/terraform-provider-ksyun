@@ -143,13 +143,9 @@ func resourceKsyunNatAssociationRead(d *schema.ResourceData, m interface{}) erro
 	p := strings.Split(d.Id(), ":")
 	req := make(map[string]interface{})
 	req["NatId.1"] = p[0]
-	if pj, ok := d.GetOk("project_id"); ok {
-		req["ProjectId.1"] = fmt.Sprintf("%v", pj)
-	} else {
-		projectErr := GetProjectInfo(&req, m.(*KsyunClient))
-		if projectErr != nil {
-			return projectErr
-		}
+	projectErr := AddProjectInfo(d, &req, m.(*KsyunClient))
+	if projectErr != nil {
+		return projectErr
 	}
 	action := "DescribeNats"
 	logger.Debug(logger.ReqFormat, action, req)

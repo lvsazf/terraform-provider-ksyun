@@ -31,6 +31,7 @@ func resourceKsyunEip() *schema.Resource {
 			},
 			"charge_type": {
 				Type:     schema.TypeString,
+				ForceNew: true,
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					"PrePaidByMonth",
@@ -174,6 +175,10 @@ func resourceKsyunEipUpdate(d *schema.ResourceData, meta interface{}) error {
 	req, err := SdkRequestAutoMapping(d, r, true, only, nil)
 	if err != nil {
 		return fmt.Errorf("error on modifying Address, %s", err)
+	}
+	err = ModifyProjectInstance(d.Id(), &req, meta)
+	if err != nil {
+		return fmt.Errorf("error on updating Eip, %s", err)
 	}
 	if len(req) > 0 {
 		req["AllocationId"] = d.Id()

@@ -1,9 +1,11 @@
 package ksyun
 
 type SdkReqTransform struct {
-	Type     TransformType
-	mapping  string
-	mappings map[string]string
+	forceUpdateParam bool
+	Type             TransformType
+	mapping          string
+	mappings         map[string]string
+	FieldReqFunc     FieldReqFunc
 }
 
 type SdkResponseData struct {
@@ -12,14 +14,17 @@ type SdkResponseData struct {
 
 type FieldRespFunc func(interface{}) interface{}
 
-type FieldReqFunc func(interface{}, string, string, *map[string]interface{}) error
+type FieldReqFunc func(interface{}, string, map[string]string, int, string, *map[string]interface{}) (int, error)
+
+type FieldReqSingleFunc func(interface{}, string, string, *map[string]interface{}) error
 
 type SdkResponseMapping struct {
 	Field         string
 	FieldRespFunc FieldRespFunc
+	KeepAuto      bool
 }
 
 type SdkRequestMapping struct {
 	Field        string
-	FieldReqFunc FieldReqFunc
+	FieldReqFunc FieldReqSingleFunc
 }

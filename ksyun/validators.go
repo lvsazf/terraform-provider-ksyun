@@ -172,7 +172,7 @@ func validateKecInstanceAgent(v interface{}, k string) (ws []string, errors []er
 
 func validateKecScalingGroupSize(v interface{}, k string) (ws []string, errors []error) {
 	value := v.(int)
-	if value < 0 || value > 10 {
+	if value < 0 || value > 1000 {
 		errors = append(errors, fmt.Errorf(
 			"%q must contain a valid ScalingGroup min or max size, got error parsing: %d", k, value))
 	}
@@ -181,7 +181,7 @@ func validateKecScalingGroupSize(v interface{}, k string) (ws []string, errors [
 
 func validateKecScalingGroupDesiredCapacity(v interface{}, k string) (ws []string, errors []error) {
 	value := v.(int)
-	if value < 0 || value > 10 {
+	if value < 0 || value > 1000 {
 		errors = append(errors, fmt.Errorf(
 			"%q must contain a valid ScalingGroupDesiredCapacity, got error parsing: %d", k, value))
 	}

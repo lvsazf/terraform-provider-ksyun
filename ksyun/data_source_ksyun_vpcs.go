@@ -1,16 +1,16 @@
 package ksyun
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/terraform-providers/terraform-provider-ksyun/logger"
 	"regexp"
 )
 
-func dataSourceKsyunVPCs() *schema.Resource {
+func dataSourceKsyunVpcs() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceKsyunVPCsRead,
+		Read: dataSourceKsyunVpcsRead,
 
 		Schema: map[string]*schema.Schema{
 			"ids": {
@@ -25,7 +25,7 @@ func dataSourceKsyunVPCs() *schema.Resource {
 			"name_regex": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.ValidateRegexp,
+				ValidateFunc: validation.StringIsValidRegExp,
 			},
 
 			"output_file": {
@@ -52,6 +52,11 @@ func dataSourceKsyunVPCs() *schema.Resource {
 							Computed: true,
 						},
 
+						"vpc_name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+
 						"cidr_block": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -67,21 +72,30 @@ func dataSourceKsyunVPCs() *schema.Resource {
 		},
 	}
 }
-
-func dataSourceKsyunVPCsRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceKsyunVpcsRead(d *schema.ResourceData, meta interface{}) error {
 	var result []map[string]interface{}
+	var err error
+	r := dataSourceKsyunVpcs()
 
 	client := meta.(*KsyunClient)
-	conn := client.vpcconn
-	readVpc := make(map[string]interface{})
 	result = []map[string]interface{}{}
+	req := make(map[string]interface{})
 
-	if ids, ok := d.GetOk("ids"); ok {
-		SchemaSetToInstanceMap(ids, "VpcId", &readVpc)
+	var only map[string]SdkReqTransform
+
+	only = map[string]SdkReqTransform{
+		"ids": {mapping: "VpcId", Type: TransformWithN},
 	}
-	resp, err := conn.DescribeVpcs(&readVpc)
+
+	req, err = SdkRequestAutoMapping(d, r, false, only, nil)
 	if err != nil {
-		return fmt.Errorf("error on reading vpc list req(%v):%v", readVpc, err)
+		return fmt.Errorf("error on reading Addresses list, %s", err)
+	}
+
+	logger.Debug(logger.ReqFormat, "DescribeVpcs", req)
+	resp, err := client.vpcconn.DescribeVpcs(&req)
+	if err != nil {
+		return fmt.Errorf("error on reading vpc list req(%v):%v", req, err)
 	}
 	l := (*resp)["VpcSet"].([]interface{})
 	if nameRegex, ok := d.GetOk("name_regex"); ok {
@@ -96,49 +110,34 @@ func dataSourceKsyunVPCsRead(d *schema.ResourceData, meta interface{}) error {
 	} else {
 		merageResultDirect(&result, l)
 	}
-	err = dataSourceKsyunVPCsSave(d, result)
+	err = dataSourceKsyunVpcsSave(d, result)
 	if err != nil {
 		return fmt.Errorf("error on reading vpc list, %s", err)
 	}
 	return nil
 }
 
-func dataSourceKsyunVPCsSave(d *schema.ResourceData, result []map[string]interface{}) error {
-	str, _ := json.Marshal(&result)
-	fmt.Printf("%+v\n", string(str))
-	//fmt.Printf("%+v\n", len(result))
-	var ids []string
-	var data []map[string]interface{}
-	var err error
+func dataSourceKsyunVpcsSave(d *schema.ResourceData, result []map[string]interface{}) error {
+	resource := dataSourceKsyunVpcs()
+	targetName := "vpcs"
+	_, _, err := SdkSliceMapping(d, result, SdkSliceData{
+		IdField: "VpcId",
+		IdMappingFunc: func(idField string, item map[string]interface{}) string {
+			return item[idField].(string)
+		},
+		SliceMappingFunc: func(item map[string]interface{}) map[string]interface{} {
+			return SdkResponseAutoMapping(resource, targetName, item, nil, resourceKsyunVpcExtra())
+		},
+		TargetName: targetName,
+	})
+	return err
+}
 
-	ids = []string{}
-	data = []map[string]interface{}{}
-
-	for _, item := range result {
-		ids = append(ids, item["VpcId"].(string))
-
-		data = append(data, map[string]interface{}{
-			"id":          item["VpcId"],
-			"name":        item["VpcName"],
-			"create_time": item["CreateTime"],
-			"cidr_block":  item["CidrBlock"],
-		})
+func resourceKsyunVpcExtra() map[string]SdkResponseMapping {
+	extra := make(map[string]SdkResponseMapping)
+	extra["VpcName"] = SdkResponseMapping{
+		Field:    "name",
+		KeepAuto: true,
 	}
-	d.SetId(hashStringArray(ids))
-	err = d.Set("total_count", len(result))
-	if err != nil {
-		return err
-	}
-	err = d.Set("vpcs", data)
-	if err != nil {
-		return err
-	}
-	if outputFile, ok := d.GetOk("output_file"); ok && outputFile.(string) != "" {
-		err = writeToFile(outputFile.(string), data)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return extra
 }

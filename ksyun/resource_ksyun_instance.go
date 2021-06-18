@@ -66,7 +66,10 @@ func resourceKsyunInstance() *schema.Resource {
 			"data_disks": {
 				Type:     schema.TypeList,
 				Optional: true,
+				MinItems: 1,
+				MaxItems: 8,
 				Computed: true,
+				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"disk_id": {
@@ -76,17 +79,19 @@ func resourceKsyunInstance() *schema.Resource {
 						"disk_type": {
 							Type:     schema.TypeString,
 							Optional: true,
+							ForceNew: true,
 							Computed: true,
 						},
 						"disk_size": {
 							Type:     schema.TypeInt,
-							Optional: true,
-							Computed: true,
+							Required: true,
+							ForceNew: true,
 						},
 						"delete_with_instance": {
 							Type:     schema.TypeBool,
 							Optional: true,
-							Computed: true,
+							Default:  true,
+							ForceNew: true,
 						},
 					},
 				},
@@ -104,11 +109,13 @@ func resourceKsyunInstance() *schema.Resource {
 			},
 			"charge_type": {
 				Type:     schema.TypeString,
+				ForceNew: true,
 				Required: true,
 			},
 			"purchase_time": {
 				Type:     schema.TypeInt,
 				Optional: true,
+				ForceNew: true,
 			},
 			"security_group_id": {
 				Type:     schema.TypeSet,
@@ -148,11 +155,6 @@ func resourceKsyunInstance() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-			},
-			"address_project_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
 			},
 			"force_delete": {
 				Type:     schema.TypeBool,
@@ -449,8 +451,9 @@ func resourceKsyunInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	conn := meta.(*KsyunClient).kecconn
 	readReq := make(map[string]interface{})
 	readReq["InstanceId.1"] = d.Id()
-	if pd, ok := d.GetOk("project_id"); ok {
-		readReq["ProjectId.1"] = fmt.Sprintf("%v", pd)
+	err := AddProjectInfo(d, &readReq, meta.(*KsyunClient))
+	if err != nil {
+		return fmt.Errorf("error on reading Instance %q, %s", d.Id(), err)
 	}
 	action := "DescribeInstances"
 	logger.Debug(logger.ReqFormat, action, readReq)
@@ -635,6 +638,36 @@ func resourceKsyunInstanceUpdate(d *schema.ResourceData, meta interface{}) error
 	updateReq := make(map[string]interface{})
 	updateReq["InstanceId"] = d.Id()
 	projectId := fmt.Sprintf("%v", d.Get("project_id"))
+
+	if d.HasChange("project_id") {
+		req := make(map[string]interface{})
+		req["InstanceId.1"] = d.Id()
+		old, _ := d.GetChange("project_id")
+		req["ProjectId.1"] = old
+
+		resp, err := conn.DescribeInstances(&req)
+		if err != nil {
+			return fmt.Errorf("error on updating instance, %s", err)
+		}
+		disk, err := getSdkValue("InstancesSet.0.DataDisks", *resp)
+		if err != nil {
+			return fmt.Errorf("error on updating instance, %s", err)
+		}
+		disks := disk.([]interface{})
+		for _, v := range disks {
+			diskId := v.(map[string]interface{})["DiskId"].(string)
+			updateReq["ProjectId"] = fmt.Sprintf("%v", d.Get("project_id"))
+			err := ModifyProjectInstance(diskId, &updateReq, meta)
+			if err != nil {
+				return fmt.Errorf("error on updating instance, %s", err)
+			}
+		}
+		updateReq["ProjectId"] = fmt.Sprintf("%v", d.Get("project_id"))
+		err = ModifyProjectInstance(d.Id(), &updateReq, meta)
+		if err != nil {
+			return fmt.Errorf("error on updating instance, %s", err)
+		}
+	}
 
 	//ModifyInstanceAttribute instancename
 	attributeNameUpdate := false
