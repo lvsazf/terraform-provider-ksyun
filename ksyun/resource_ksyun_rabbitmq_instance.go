@@ -344,7 +344,13 @@ func resourceRabbitmqInstanceRead(d *schema.ResourceData, meta interface{}) erro
 		return nil
 	}
 
-	SdkResponseAutoResourceData(d, resourceKsyunRabbitmq(), item, nil)
+	extra := make(map[string]SdkResponseMapping)
+	extra["AvailabilityZoneEn"] = SdkResponseMapping{
+		Field: "availability_zone",
+	}
+	extra["AvailabilityZone"] = SdkResponseMapping{}
+
+	SdkResponseAutoResourceData(d, resourceKsyunRabbitmq(), item, extra)
 
 	return nil
 }
