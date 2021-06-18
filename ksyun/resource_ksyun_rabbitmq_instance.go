@@ -63,6 +63,12 @@ func resourceKsyunRabbitmq() *schema.Resource {
 			"duration": {
 				Type:     schema.TypeInt,
 				Optional: true,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					if v, ok := d.GetOk("bill_type"); ok && v == 1 {
+						return false
+					}
+					return true
+				},
 			},
 			"mode": {
 				Type:     schema.TypeString,
@@ -107,22 +113,18 @@ func resourceKsyunRabbitmq() *schema.Resource {
 			},
 			"status_name": {
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"vip": {
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"web_vip": {
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"protocol": {
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"security_group_id": {
@@ -132,7 +134,6 @@ func resourceKsyunRabbitmq() *schema.Resource {
 			},
 			"network_type": {
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"product_id": {
@@ -157,19 +158,18 @@ func resourceKsyunRabbitmq() *schema.Resource {
 			},
 			"eip": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 			"web_eip": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 			"eip_egress": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 			"port": {
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"status": {
@@ -342,10 +342,6 @@ func resourceRabbitmqInstanceRead(d *schema.ResourceData, meta interface{}) erro
 	logger.Debug(logger.RespFormat, action, queryReq, *resp)
 	if item, ok = (*resp)["Data"].(map[string]interface{}); !ok {
 		return nil
-	}
-
-	if _, ok = item["Duration"]; !ok {
-		item["Duration"] = 0
 	}
 
 	SdkResponseAutoResourceData(d, resourceKsyunRabbitmq(), item, nil)
